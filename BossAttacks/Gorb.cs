@@ -1,0 +1,41 @@
+﻿using System.Collections.Generic;
+using UnityEngine;
+using HutongGames.PlayMaker;
+using HutongGames.PlayMaker.Actions;
+using ItemChanger.Extensions;
+
+namespace GhostPlando.BossAttacks {
+    internal class Gorb {
+        internal static GameObject slugPrefab;
+        internal static GameObject spearObject;
+        internal static Object projectileAudio;
+
+        public static void Hook(PlayMakerFSM nosk) {
+            FsmState attackState = slugPrefab.LocateMyFSM("Attacking").GetState("Attack");
+            projectileAudio = attackState.GetFirstActionOfType<AudioPlayerOneShotSingle>().audioClip.Value;
+            spearObject = attackState.GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
+            nosk.AddFsmGameObject("Gorb Shot", null);
+        }
+
+        public static FsmStateAction[] RunSpears(PlayMakerFSM self) {
+            List<FsmStateAction> actions = [
+                new AudioPlaySimple {
+                    gameObject = new FsmOwnerDefault { OwnerOption = OwnerDefaultOption.UseOwner },
+                    volume = 1f,
+                    oneShotClip = new FsmObject { Value = projectileAudio }
+                }
+            ];
+            float random = Random.Range(0, 360);
+            for(int i = 0; i < 8; i++) {
+                actions.Add(new SpawnObjectFromGlobalPool {
+                    gameObject = spearObject,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                    position = new Vector3(0, 2, 0),
+                    rotation = new Vector3(0, 0, i * 45f + random),
+                    storeObject = self.FsmVariables.GetFsmGameObject("Gorb Shot")
+                });
+            }
+            return actions.ToArray();
+        }
+    }
+}
