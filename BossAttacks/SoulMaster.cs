@@ -14,7 +14,6 @@ namespace GhostPlando.BossAttacks {
         internal const string pillarName = "Soul Master Pillar";
         internal const string flashName = "Soul Master Flash";
         internal const string particlesName = "Soul Master Particles";
-        //internal const string rocksName = "Soul Master Rocks";
 
         public static void Hook(PlayMakerFSM nosk) {
             GameObject mage = GameObject.Instantiate(mageLordPrefab);
@@ -24,8 +23,7 @@ namespace GhostPlando.BossAttacks {
                 (blastName, "Quake Blast", new Vector3(0.47f, 0.66f, 0)),
                 (pillarName, "Quake Pillar", new Vector3(-0.18f, 7.04f, 0)),
                 (flashName, "White Flash", new Vector3(-0.14f, -0.14f, 0.01f)),
-                (particlesName, "Quake Particles", new Vector3(0, -3.1f, -0.001f)),
-                //(rocksName, "Quake Rocks", new Vector3(0.33f, -2.94f, -0.01f))
+                (particlesName, "Quake Particles", new Vector3(0, -3.1f, -0.001f))
             }) {
                 nosk.AddFsmGameObject(fieldName, GameObject.Instantiate(mage.FindChild(childName), nosk.transform.position + offset, Quaternion.identity, nosk.transform));
             }
@@ -48,7 +46,6 @@ namespace GhostPlando.BossAttacks {
                         self.FsmVariables.GetFsmGameObject(pillarName).Value.SetActive(true);
                         self.FsmVariables.GetFsmGameObject(flashName).Value.SetActive(true);
                     }
-                    fallingBool.Value = false;
                 }),
                 new SendEventByName {
                     eventTarget = GameCameras.instance.mainCamera.gameObject.GameObjectToEventTarget(),
@@ -60,20 +57,21 @@ namespace GhostPlando.BossAttacks {
                     gameObject = self.FsmGOToOwner(particlesName),
                     emit = 0
                 },
-                /*new PlayParticleEmitter {
-                    gameObject = self.FsmGOToOwner(rocksName),
-                    emit = 0
-                },*/
-                new AudioPlaySimple {
-                    gameObject = new FsmOwnerDefault { OwnerOption = OwnerDefaultOption.UseOwner },
-                    volume = 1f,
-                    oneShotClip = new FsmObject { Value = quakeAudio }
+                new AudioPlayerOneShotSingle {
+                    audioPlayer = Modules.NoskBossModule.audioPlayer,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                    audioClip = quakeAudio,
+                    pitchMin = 1,
+                    pitchMax = 1,
+                    volume = 1,
+                    delay = 0,
+                    storePlayer = self.FsmVariables.GetFsmGameObject("Empty Store")
                 },
                 new SpawnObjectFromGlobalPool {
                     gameObject = shockwavePoolObject,
                     spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
                     position = new Vector3(1.5f, 0, 0),
-                    rotation = new Vector3(0, 0, 0),
+                    rotation = Vector3.zero,
                     storeObject = self.FsmVariables.GetFsmGameObject("Quake Shockwave")
                 },
                 new Lambda(() => {
@@ -88,7 +86,7 @@ namespace GhostPlando.BossAttacks {
                     gameObject = shockwavePoolObject,
                     spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
                     position = new Vector3(-1.5f, 0, 0),
-                    rotation = new Vector3(0, 0, 0),
+                    rotation = Vector3.zero,
                     storeObject = self.FsmVariables.GetFsmGameObject("Quake Shockwave")
                 },
                 new Lambda(() => {

@@ -22,13 +22,15 @@ namespace GhostPlando.BossAttacks {
             nosk.AddFsmGameObject(barrelName, barrelSummon);
         }
 
-        public static FsmStateAction Run(PlayMakerFSM self) {
-            return new SendEventByName {
-                eventTarget = self.FsmGOToEvent(barrelName),
-                sendEvent = "SUMMON",
-                delay = 0f,
-                everyFrame = false
-            };
+        public static FsmStateAction[] RunBarrels(PlayMakerFSM self) {
+            return [
+                new SendEventByName {
+                    eventTarget = self.FsmGOToEvent(barrelName),
+                    sendEvent = "SUMMON",
+                    delay = 0f,
+                    everyFrame = false
+                }
+            ];
         }
     }
 }

@@ -37,11 +37,11 @@ namespace GhostPlando.BossAttacks {
             spawnState.Actions = [
                 new RandomFloat {
                     min = 80,
-                    max = 110,
+                    max = 111,
                     storeResult = jarFsm.FsmVariables.GetFsmFloat("Jar Random")
                 },
                 new SpawnObjectFromGlobalPool {
-                    gameObject = new FsmGameObject { Value = jarObject },
+                    gameObject = jarObject,
                     spawnPoint = jarFsm.FsmVariables.GetFsmGameObject("Self"),
                     position = Vector3.zero,
                     rotation = Vector3.zero,
@@ -61,8 +61,8 @@ namespace GhostPlando.BossAttacks {
                     sjc.breakY = 4;
                 }),
                 new Wait {
-                    time = 1,
-                    finishEvent = new FsmEvent("FINISHED"),
+                    time = 0.52f,
+                    finishEvent = FsmEvent.GetFsmEvent("FINISHED"),
                     realTime = false
                 }
             ];
@@ -74,7 +74,12 @@ namespace GhostPlando.BossAttacks {
                     PlayMakerFSM collectorFsm = self.gameObject.LocateMyFSM(fsmName);
                     collectorFsm.FsmVariables.GetFsmBool("Spawning").Value = true;
                     collectorFsm.SendEvent("TRIGGER");
-                })
+                }),
+                new Wait {
+                    time = 4.5f,
+                    finishEvent = FsmEvent.GetFsmEvent("FINISHED"),
+                    realTime = false
+                }
             ];
         }
 

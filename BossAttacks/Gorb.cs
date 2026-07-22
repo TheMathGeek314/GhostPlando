@@ -19,10 +19,15 @@ namespace GhostPlando.BossAttacks {
 
         public static FsmStateAction[] RunSpears(PlayMakerFSM self) {
             List<FsmStateAction> actions = [
-                new AudioPlaySimple {
-                    gameObject = new FsmOwnerDefault { OwnerOption = OwnerDefaultOption.UseOwner },
-                    volume = 1f,
-                    oneShotClip = new FsmObject { Value = projectileAudio }
+                new AudioPlayerOneShotSingle {
+                    audioPlayer = Modules.NoskBossModule.audioPlayer,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                    audioClip = projectileAudio,
+                    pitchMin = 1,
+                    pitchMax = 1,
+                    volume = 1,
+                    delay = 0,
+                    storePlayer = self.FsmVariables.GetFsmGameObject("Empty Store")
                 }
             ];
             float random = Random.Range(0, 360);

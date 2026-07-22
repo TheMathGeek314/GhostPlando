@@ -1,0 +1,122 @@
+﻿using UnityEngine;
+using HutongGames.PlayMaker;
+using HutongGames.PlayMaker.Actions;
+using ItemChanger.Extensions;
+using ItemChanger.FsmStateActions;
+
+namespace GhostPlando.BossAttacks {
+    internal class HollowKnight {
+        internal static GameObject thkPrefab;
+        internal static GameObject pillarObject;
+        internal static Object pillarAudio;
+
+        public static void Hook(PlayMakerFSM nosk) {
+            PlayMakerFSM thkfsm = thkPrefab.LocateMyFSM("Control");
+            pillarObject = thkfsm.GetState("Plume Gen").GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
+            pillarAudio = thkfsm.GetState("Plume Up").GetFirstActionOfType<AudioPlayerOneShotSingle>().audioClip.Value;
+            nosk.AddFsmGameObject("THK Pillar", null);
+            nosk.AddFsmFloat("THK PillarL X", 0);
+            nosk.AddFsmFloat("THK PillarR X", 0);
+            nosk.AddFsmInt("THK Pillar Count", 0);
+        }
+
+        public static FsmStateAction[] SetupPillars(PlayMakerFSM self) {
+            return [
+                new SetFloatValue {
+                    floatVariable = self.FsmVariables.GetFsmFloat("THK PillarL X"),
+                    floatValue = 92.5f,
+                    everyFrame = false
+                },
+                new SetFloatValue {
+                    floatVariable = self.FsmVariables.GetFsmFloat("THK PillarR X"),
+                    floatValue = 97.5f,
+                    everyFrame = false
+                },
+                new SetIntValue {
+                    intVariable = self.FsmVariables.GetFsmInt("THK Pillar Count"),
+                    intValue = 10,
+                    everyFrame = false
+                }
+            ];
+        }
+
+        public static FsmStateAction[] GenPillars(PlayMakerFSM self) {
+            return [
+                new SpawnObjectFromGlobalPool {
+                    gameObject = pillarObject,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                    position = Vector3.zero,
+                    rotation = Vector3.zero,
+                    storeObject = self.FsmVariables.GetFsmGameObject("THK Pillar")
+                },
+                new SetPosition {
+                    gameObject = self.FsmGOToOwner("THK Pillar"),
+                    vector = Vector3.zero,
+                    x = self.FsmVariables.GetFsmFloat("THK PillarL X"),
+                    y = 3f,
+                    z = 0,
+                    space = Space.World,
+                    everyFrame = false,
+                    lateUpdate = false
+                },
+                new Lambda(() => {
+                    FsmState anticState = self.FsmVariables.GetFsmGameObject("THK Pillar").Value.GetComponent<PlayMakerFSM>().GetState("Antic");
+                    anticState.RemoveTransitionsTo("Scale Up");
+                    anticState.AddTransition("THK PLUMES UP", "Scale Up");
+                }),
+                new SpawnObjectFromGlobalPool {
+                    gameObject = pillarObject,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                    position = Vector3.zero,
+                    rotation = Vector3.zero,
+                    storeObject = self.FsmVariables.GetFsmGameObject("THK Pillar")
+                },
+                new SetPosition {
+                    gameObject = self.FsmGOToOwner("THK Pillar"),
+                    vector = Vector3.zero,
+                    x = self.FsmVariables.GetFsmFloat("THK PillarR X"),
+                    y = 3f,
+                    z = 0,
+                    space = Space.World,
+                    everyFrame = false,
+                    lateUpdate = false
+                },
+                new Lambda(() => {
+                    FsmState anticState = self.FsmVariables.GetFsmGameObject("THK Pillar").Value.GetComponent<PlayMakerFSM>().GetState("Antic");
+                    anticState.RemoveTransitionsTo("Scale Up");
+                    anticState.AddTransition("THK PLUMES UP", "Scale Up");
+                    FsmInt count = self.FsmVariables.GetFsmInt("THK Pillar Count");
+                    count.Value--;
+                    if(count.Value <= 0) {
+                        self.SendEvent("END PILLAR GEN");
+                    }
+                    else {
+                        self.FsmVariables.GetFsmFloat("THK PillarR X").Value += Random.Range(4.5f, 5);
+                        self.FsmVariables.GetFsmFloat("THK PillarL X").Value -= Random.Range(4.5f, 5);
+                    }
+                })
+            ];
+        }
+
+        public static FsmStateAction[] TriggerPillars(PlayMakerFSM self) {
+            return [
+                new AudioPlayerOneShotSingle {
+                    audioPlayer = Modules.NoskBossModule.audioPlayer,
+                    spawnPoint = HeroController.instance.gameObject,
+                    audioClip = pillarAudio,
+                    pitchMin = 1,
+                    pitchMax = 1,
+                    volume = 1,
+                    delay = 0,
+                    storePlayer = self.FsmVariables.GetFsmGameObject("Empty Store")
+                },
+                new SendEventByName {
+                    eventTarget = new FsmEventTarget { target = FsmEventTarget.EventTarget.BroadcastAll },
+                    sendEvent = "THK PLUMES UP",
+                    delay = 0f,
+                    everyFrame = false
+                }
+            ];
+        }
+    }
+}

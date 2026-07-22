@@ -17,12 +17,30 @@ namespace GhostPlando.BossAttacks {
         }
 
         public static FsmStateAction[] RunBluePaint(PlayMakerFSM self) {
-            List<FsmStateAction> actions = new();
+            List<FsmStateAction> actions = [
+                new IntCompare {
+                    integer1 = self.FsmVariables.GetFsmInt("HP"),
+                    integer2 = self.FsmVariables.GetFsmInt("Phase 2-3 HP"),
+                    greaterThan = FsmEvent.GetFsmEvent("FINISHED"),
+                    everyFrame = false
+                },
+                new IntCompare {
+                    integer1 = self.FsmVariables.GetFsmInt("HP"),
+                    integer2 = self.FsmVariables.GetFsmInt("Phase 3-4 HP"),
+                    equal = FsmEvent.GetFsmEvent("FINISHED"),
+                    lessThan = FsmEvent.GetFsmEvent("FINISHED"),
+                    everyFrame = false
+                },
+                new Lambda(() => {
+                    float scale = self.gameObject.transform.localScale.x;
+                    self.FsmVariables.GetFsmFloat("Paint Speed").Value = -10 * scale;
+                })
+            ];
             int[] ySpeeds = [17, 24, 30];
-            actions.Add(new Lambda(() => {
+            /*actions.Add(new Lambda(() => {
                 float scale = self.gameObject.transform.localScale.x;
                 self.FsmVariables.GetFsmFloat("Paint Speed").Value = -10 * scale;
-            }));
+            }));*/
             for(int i = 0; i < 3; i++) {
                 actions.Add(new SpawnObjectFromGlobalPool {
                     gameObject = bluePaintObject,

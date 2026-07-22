@@ -50,7 +50,7 @@ namespace GhostPlando.BossAttacks {
                 },
                 new Wait {
                     time = 0.3f,
-                    finishEvent = new FsmEvent("FINISHED"),
+                    finishEvent = FsmEvent.GetFsmEvent("FINISHED"),
                     realTime = false
                 }
             ];
@@ -59,7 +59,9 @@ namespace GhostPlando.BossAttacks {
         public static FsmStateAction[] RunSlowZap(PlayMakerFSM self) {
             return [
                 new Lambda(() => {
-                    if(!self.FsmVariables.GetFsmBool("Will Spit").Value) {
+                    FsmVariables fv = self.FsmVariables;
+                    int hp = fv.GetFsmInt("HP").Value;
+                    if(!fv.GetFsmBool("Will Spit").Value && hp <= fv.GetFsmInt("Phase 2-3 HP").Value && hp > fv.GetFsmInt("Phase 3-4 HP").Value) {
                         PlayMakerFSM uumuuFsm = self.gameObject.LocateMyFSM(fsmName);
                         uumuuFsm.FsmVariables.GetFsmBool("Running").Value = true;
                         uumuuFsm.SendEvent("TRIGGER");
