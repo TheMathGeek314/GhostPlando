@@ -4,9 +4,7 @@ using System.Linq;
 using System.Reflection;
 using ItemChanger;
 using MoreDoors.Data;
-using RandomizerCore.Exceptions;
 using RandomizerCore.Logic;
-using RandomizerCore.Randomization;
 using RandomizerMod.RC;
 using RandomizerMod.Settings;
 
@@ -32,13 +30,9 @@ namespace GhostPlando {
             new(("Collector", "COLLECTOR", LocationNames.Collectors_Map)),
             new(("Crystal_Guardian", "MEGABEAMMINER", LocationNames.Boss_Geo_Enraged_Guardian)),
             new(("Uumuu", "UMMU", LocationNames.Journal_Entry_Charged_Lumafly)),
-            //new(("Traitor_Lord", "TRAITORLORD")),
-            //new(("Soul_Warrior", "MAGEKNIGHT")),
-            //new(("Soul_Master", "SOULMASTER")),
             new(("Dung_Defender", "DUNGDEF", LocationNames.Defenders_Crest)),
             new(("Watcher_Knights", "WATCHERKNIGHTS", LocationNames.Hallownest_Seal_Watcher_Knight)),
             new(("No_Eyes", "GHOST_NOEYES", LocationNames.Boss_Essence_No_Eyes)),
-            //new(("Marmu", "GHOST_MARMU")),
             new(("Galien", "GHOST_GALIEN", LocationNames.Boss_Essence_Galien)),
             new(("Markoth", "GHOST_MARKOTH", LocationNames.Boss_Essence_Markoth)),
             new(("Xero", "GHOST_XERO", LocationNames.Boss_Essence_Xero)),
@@ -57,7 +51,7 @@ namespace GhostPlando {
                 RandoController.OnExportCompleted += AddModules;
             if(AlterRandoLogic)
                 RCData.RuntimeLogicOverride.Subscribe(101010f, EditLogic);
-            else
+            else if(GenerateDoorData)
                 RCData.RuntimeLogicOverride.Subscribe(101010f, BackupEditLogic);
             if(RemoveLocationsItems.Item1)
                 RequestBuilder.OnUpdate.Subscribe(101010f, RemoveLocations);
@@ -367,11 +361,26 @@ namespace GhostPlando {
                 ItemNames.Weaversong,
                 ItemNames.Glowing_Womb,
                 ItemNames.Grimmkin_Flame,
-                ItemNames.Awoken_Dream_Nail
+                ItemNames.Awoken_Dream_Nail,
+                //unusable items or bloat, balancing locations/items
+                ItemNames.Shopkeepers_Key,
+                ItemNames.Elegant_Key,
+                ItemNames.Pale_Ore,
+                ItemNames.Rancid_Egg,
+                ItemNames.Wanderers_Journal,
+                ItemNames.Hallownest_Seal,
+                ItemNames.Kings_Idol,
+                ItemNames.Arcane_Egg
             }) {
                 rb.RemoveItemByName(itemName);
             }
             rb.RemoveItemsWhere(i => i.EndsWith("_Stag") && i != ItemNames.Lore_Tablet_Greenpath_Stag);
+            //balancing locations/items
+            rb.RemoveItemsWhere(i => i.StartsWith("Lore_Tablet"));
+            rb.RemoveItemsWhere(i => i.EndsWith("_Map"));
+            rb.RemoveItemsWhere(i => i.StartsWith("Boss_Geo"));
+            rb.RemoveItemsWhere(i => i.StartsWith("Journal_Entry"));
+            rb.RemoveItemsWhere(i => i.StartsWith("Geo_Chest"));
         }
 
         private static void DoConstraints(RequestBuilder rb) {

@@ -62,7 +62,7 @@ namespace GhostPlando.BossAttacks {
                 }),
                 new Wait {
                     time = 0.52f,
-                    finishEvent = FsmEvent.GetFsmEvent("FINISHED"),
+                    finishEvent = FsmEvent.Finished,
                     realTime = false
                 }
             ];
@@ -77,7 +77,7 @@ namespace GhostPlando.BossAttacks {
                 }),
                 new Wait {
                     time = 4.5f,
-                    finishEvent = FsmEvent.GetFsmEvent("FINISHED"),
+                    finishEvent = FsmEvent.Finished,
                     realTime = false
                 }
             ];

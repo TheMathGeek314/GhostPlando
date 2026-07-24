@@ -66,5 +66,16 @@ namespace GhostPlando {
         public static Vector3[] AssignFromTuples3(params (float, float)[] values) {
             return values.Select(tuple => new Vector3(tuple.Item1, tuple.Item2)).ToArray();
         }
+
+        public static FsmState ChainFsmStates(this FsmState state, params (string, FsmStateAction[])[] next) {
+            FsmState previousState = state;
+            foreach((string name, FsmStateAction[] actions) in next) {
+                FsmState newState = state.Fsm.FsmComponent.AddState(name);
+                newState.Actions = actions;
+                previousState.AddTransition("FINISHED", newState);
+                previousState = newState;
+            }
+            return previousState;
+        }
     }
 }

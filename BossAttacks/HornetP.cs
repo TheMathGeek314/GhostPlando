@@ -34,8 +34,8 @@ namespace GhostPlando.BossAttacks {
             }));
             growState.AddTransition("FINISHED", "Delay");
             waitState.AddFirstAction(new Wait() {
-                time = 1f,
-                finishEvent = FsmEvent.GetFsmEvent("FINISHED"),
+                time = 0.6f,
+                finishEvent = FsmEvent.Finished,
                 realTime = false
             });
             waitState.AddTransition("FINISHED", "Destroy");
@@ -93,7 +93,7 @@ namespace GhostPlando.BossAttacks {
             return [
                 new BoolTest {
                     boolVariable = self.FsmVariables.GetFsmBool("Falling from Ceiling"),
-                    isTrue = FsmEvent.GetFsmEvent("FINISHED"),
+                    isTrue = FsmEvent.Finished,
                     everyFrame = false
                 },
                 new GetAngleToTarget2D {
@@ -130,7 +130,7 @@ namespace GhostPlando.BossAttacks {
                 },
                 new SetFloatValue {
                     floatVariable = self.FsmVariables.GetFsmFloat("Wait After Falling"),
-                    floatValue = 0.5f,
+                    floatValue = 0.3f,
                     everyFrame = false
                 }
             ];

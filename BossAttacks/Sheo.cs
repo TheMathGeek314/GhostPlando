@@ -21,14 +21,14 @@ namespace GhostPlando.BossAttacks {
                 new IntCompare {
                     integer1 = self.FsmVariables.GetFsmInt("HP"),
                     integer2 = self.FsmVariables.GetFsmInt("Phase 2-3 HP"),
-                    greaterThan = FsmEvent.GetFsmEvent("FINISHED"),
+                    greaterThan = FsmEvent.Finished,
                     everyFrame = false
                 },
                 new IntCompare {
                     integer1 = self.FsmVariables.GetFsmInt("HP"),
                     integer2 = self.FsmVariables.GetFsmInt("Phase 3-4 HP"),
-                    equal = FsmEvent.GetFsmEvent("FINISHED"),
-                    lessThan = FsmEvent.GetFsmEvent("FINISHED"),
+                    equal = FsmEvent.Finished,
+                    lessThan = FsmEvent.Finished,
                     everyFrame = false
                 },
                 new Lambda(() => {
@@ -37,10 +37,6 @@ namespace GhostPlando.BossAttacks {
                 })
             ];
             int[] ySpeeds = [17, 24, 30];
-            /*actions.Add(new Lambda(() => {
-                float scale = self.gameObject.transform.localScale.x;
-                self.FsmVariables.GetFsmFloat("Paint Speed").Value = -10 * scale;
-            }));*/
             for(int i = 0; i < 3; i++) {
                 actions.Add(new SpawnObjectFromGlobalPool {
                     gameObject = bluePaintObject,

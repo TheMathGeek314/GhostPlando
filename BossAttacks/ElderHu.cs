@@ -70,16 +70,16 @@ namespace GhostPlando.BossAttacks {
                         float1 = nosk.FsmVariables.GetFsmFloat("Self X"),
                         float2 = ringPositions[17 - i],
                         tolerance = 0,
-                        equal = FsmEvent.GetFsmEvent("FINISHED"),
-                        lessThan = FsmEvent.GetFsmEvent("FINISHED"),
+                        equal = FsmEvent.Finished,
+                        lessThan = FsmEvent.Finished,
                         everyFrame = false
                     });
                     rightState.AddLastAction(new FloatCompare {
                         float1 = nosk.FsmVariables.GetFsmFloat("Self X"),
                         float2 = ringPositions[i],
                         tolerance = 0,
-                        equal = FsmEvent.GetFsmEvent("FINISHED"),
-                        greaterThan = FsmEvent.GetFsmEvent("FINISHED"),
+                        equal = FsmEvent.Finished,
+                        greaterThan = FsmEvent.Finished,
                         everyFrame = false
                     });
                 }
@@ -94,16 +94,16 @@ namespace GhostPlando.BossAttacks {
                         float1 = nosk.FsmVariables.GetFsmFloat("Self X"),
                         float2 = ringPositions[17 - i],
                         tolerance = 0,
-                        equal = FsmEvent.GetFsmEvent("FINISHED"),
-                        lessThan = FsmEvent.GetFsmEvent("FINISHED"),
+                        equal = FsmEvent.Finished,
+                        lessThan = FsmEvent.Finished,
                         everyFrame = true
                     });
                     rightState.AddLastAction(new FloatCompare {
                         float1 = nosk.FsmVariables.GetFsmFloat("Self X"),
                         float2 = ringPositions[i],
                         tolerance = 0,
-                        equal = FsmEvent.GetFsmEvent("FINISHED"),
-                        greaterThan = FsmEvent.GetFsmEvent("FINISHED"),
+                        equal = FsmEvent.Finished,
+                        greaterThan = FsmEvent.Finished,
                         everyFrame = true
                     });
                 }

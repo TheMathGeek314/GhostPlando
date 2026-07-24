@@ -21,7 +21,7 @@ namespace GhostPlando.BossAttacks {
             return [
                 new BoolTest {
                     boolVariable = self.FsmVariables.GetFsmBool("Falling from Ceiling"),
-                    isFalse = FsmEvent.GetFsmEvent("FINISHED"),
+                    isFalse = FsmEvent.Finished,
                     everyFrame = false
                 },
                 new AudioPlayerOneShotSingle {

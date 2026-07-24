@@ -7,21 +7,23 @@ using HutongGames.PlayMaker.Actions;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
 using ItemChanger.Modules;
+using System;
 
 namespace GhostPlando.Modules {
     internal class NoskBossModule: Module {
         internal static GameObject titlePrefab;
         internal static GameObject titleFaderPrefab;
-        private const string titleName = "Nosk Title";
-        private const string titleFaderName = "Nosk Title Fader";
+        /*private const string titleName = "Nosk Title";
+        private const string titleFaderName = "Nosk Title Fader";*/
         internal static GameObject audioPlayer;
-        private int[] phaseHpHits = [20, 35, 35, 35, 35, 35];
+        private int[] phaseHpHits = [25, 50, 45, 45, 45, 45];
 
         public override void Initialize() {
             On.Language.Language.Get_string_string += LanguageGet;
             On.GameManager.OnNextLevelReady += ResetEncounter;
             On.PlayMakerFSM.OnEnable += EditNosk;
             On.GameManager.OnNextLevelReady += EditArena;
+            On.PlayMakerFSM.OnEnable += RemoveBossTitle;
         }
 
         public override void Unload() {
@@ -29,6 +31,7 @@ namespace GhostPlando.Modules {
             On.GameManager.OnNextLevelReady -= ResetEncounter;
             On.PlayMakerFSM.OnEnable -= EditNosk;
             On.GameManager.OnNextLevelReady -= EditArena;
+            On.PlayMakerFSM.OnEnable -= RemoveBossTitle;
         }
 
         private string LanguageGet(On.Language.Language.orig_Get_string_string orig, string key, string sheetTitle) {
@@ -54,7 +57,7 @@ namespace GhostPlando.Modules {
             if(self.gameObject.scene.name != "Deepnest_32" || self.gameObject.name != "Mimic Spider" || self.FsmName != "Mimic Spider")
                 return;
 
-            //title
+            //full title card
             {
                 GameObject title = GameObject.Instantiate(titlePrefab);
                 GameObject fader = GameObject.Instantiate(titleFaderPrefab);
@@ -64,14 +67,15 @@ namespace GhostPlando.Modules {
                     fv.GetFsmColor("Down Colour").Value = new Color(1, 0.4f, 0, 0);
                     fv.GetFsmColor("Start Colour").Value = new Color(1, 0.4f, 0, 0);
                 }
-                self.AddFsmGameObject(titleName, title);
-                self.AddFsmGameObject(titleFaderName, fader);
+                self.AddFsmGameObject("Nosk Title", title);
+                self.AddFsmGameObject("Nosk Title Fader", fader);
                 FsmState roarEnd = self.GetState("Roar End");
                 FsmState trans1 = self.GetState("Trans 1");
-                new List<FsmStateAction> {
+                roarEnd.AddLastActions(FsmEdits.RoarEndActions(self, title, fader, trans1));
+                /*new List<FsmStateAction> {
                     new Wait {
                         time = 2.5f,
-                        finishEvent = FsmEvent.GetFsmEvent("FINISHED"),
+                        finishEvent = FsmEvent.Finished,
                         realTime = false
                     },
                     new Lambda(() => {
@@ -81,14 +85,14 @@ namespace GhostPlando.Modules {
                         fader.transform.localScale = new Vector3(37.6446f, 26.62126f, 1);
                     }),
                     new ActivateGameObject {
-                        gameObject = self.FsmGOToOwner(titleFaderName),
+                        gameObject = self.FsmGOToOwner("Nosk Title Fader"),
                         activate = true,
                         recursive = false,
                         resetOnExit = false,
                         everyFrame = false
                     },
                     new ActivateGameObject {
-                        gameObject = self.FsmGOToOwner(titleName),
+                        gameObject = self.FsmGOToOwner("Nosk Title"),
                         activate = true,
                         recursive = false,
                         resetOnExit = false,
@@ -103,11 +107,11 @@ namespace GhostPlando.Modules {
                         delayTime = 0,
                         transitionTime = 0
                     }
-                }.ForEach(action => roarEnd.AddLastAction(action));
+                }.ForEach(action => roarEnd.AddLastAction(action));*/
                 trans1.GetFirstActionOfType<TransitionToAudioSnapshot>().Enabled = false;
                 trans1.GetFirstActionOfType<ApplyMusicCue>().Enabled = false;
-                FsmState roarInit = self.GetState("Roar Init");
-                roarInit.AddFirstAction(new SendEventByName {
+                self.GetState("Roar Init").AddFirstActions(FsmEdits.RoarInitActions(self));
+                /*roarInit.AddFirstAction(new SendEventByName {
                     eventTarget = new FsmEventTarget {
                         target = FsmEventTarget.EventTarget.GameObject,
                         gameObject = self.FsmGOToOwner(titleName),
@@ -126,11 +130,11 @@ namespace GhostPlando.Modules {
                     delay = 0,
                     easeType = iTween.EaseType.linear,
                     loopType = iTween.LoopType.none,
-                    finishEvent = FsmEvent.GetFsmEvent("FINISHED"),
+                    finishEvent = FsmEvent.Finished,
                     realTime = false,
                     stopOnExit = true,
                     loopDontFinish = false
-                }, 1);
+                }, 1);*/
             }
 
             //int hp = phaseHpHits[5] * 5;
@@ -216,7 +220,7 @@ namespace GhostPlando.Modules {
             roof4b.AddFirstActions(BossAttacks.PureVessel.RunSpikes(self));
             roof4b.AddLastActions(BossAttacks.HollowKnight.SetupPillars(self));
             roof4c.AddFirstActions(BossAttacks.HollowKnight.GenPillars(self));
-            roof4d.AddFirstAction(new Wait { time = 0.6f, finishEvent = FsmEvent.GetFsmEvent("FINISHED"), realTime = false });
+            roof4d.AddFirstAction(new Wait { time = 0.6f, finishEvent = FsmEvent.Finished, realTime = false });
             roof4e.AddFirstActions(BossAttacks.HollowKnight.TriggerPillars(self));
             roof4e.AddLastActions(BossAttacks.CGuardian.RunCeilingLasers(self));
             roof4e.AddLastActions(BossAttacks.PureVessel.RunFocus(self));
@@ -249,7 +253,6 @@ namespace GhostPlando.Modules {
             fallenDecisionState.AddTransition("FOUR", fallen4);
             fallen4.AddTransition("FINISHED", land2State);
             fallenDecisionState.AddTransition("ONE", land2State);
-            fallenDecisionState.AddTransition("FINISHED", land2State);
             land2State.RemoveTransitionsTo("Roof Jump?");
             land2State.AddTransition("FINISHED", land3State);
             land3State.AddTransition("FINISHED", "Roof Jump?");
@@ -265,7 +268,7 @@ namespace GhostPlando.Modules {
             fallen2Master.Actions = BossAttacks.SoulMaster.RunQuake(self);
             fallen3.Actions = BossAttacks.WDefender.RunShockwave(self);
             fallen4.Actions = BossAttacks.TraitorLord.RunShockwave(self);
-            //land2State.AddFirstAction(new SetBoolValue { boolVariable = self.FsmVariables.GetFsmBool("Falling from Ceiling"), boolValue = false, everyFrame = true });
+            fallen4.AddLastActions(BossAttacks.WDefender.RunFountain(self));
             land2State.AddFirstActions(FsmEdits.RevertCeilingFall(self));
             land3State.Actions = FsmEdits.AfterFallActions(self);
             self.GetState("Roof Jump?").AddFirstActions(FsmEdits.ResetFallWait(self));
@@ -294,6 +297,37 @@ namespace GhostPlando.Modules {
             hoverState.Actions = FsmEdits.HoveringActions(self);
             fallingState.AddFirstAction(new SetGravity2dScale { gameObject = self.FsmGOToOwner("Self"), gravityScale = 2 });
 
+            //decision when spitting
+            FsmState spitAnticState = self.GetState("Spit Antic");
+            FsmState spit1State = self.GetState("Spit 1");
+            FsmState spitDecisionState = self.AddState("Spit Decision");
+            FsmState gorbState = self.AddState("Gorb Spit");
+            FsmState mantisState = self.AddState("Mantis Spit");
+            FsmState firebat1 = self.AddState("Firebat 1 ");
+            spitAnticState.RemoveTransitionsTo("Spit 1");
+            spitAnticState.AddTransition("FINISHED", spitDecisionState);
+            spitDecisionState.AddTransition("ONE", spit1State);
+            spitDecisionState.AddTransition("TWO", gorbState);
+            spitDecisionState.AddTransition("THREE", mantisState);
+            spitDecisionState.AddTransition("FOUR", firebat1);
+            gorbState.AddTransition("FINISHED", spit1State);
+            mantisState.AddTransition("FINISHED", spit1State);
+            spitDecisionState.Actions = FsmEdits.PhaseDecisionActions(self);
+            gorbState.Actions = BossAttacks.Gorb.RunSpears(self);
+            mantisState.Actions = BossAttacks.MantisLords.Run(self);
+            firebat1.Actions = BossAttacks.Grimm.RunFirebats(self, 0.3f, 1, -2, false);
+            firebat1.ChainFsmStates([
+                ("Firebat 2", BossAttacks.Grimm.RunFirebats(self, 0.3f, 1.1f, 0, false)),
+                ("Firebat 3", BossAttacks.Grimm.RunFirebats(self, 0.3f, 1.2f, -2, true).Concat(BossAttacks.PureVessel.RunTendrilAntic(self)).ToArray()),
+                ("PV Tendril Burst", BossAttacks.PureVessel.RunTendrilBurst(self)),
+                ("PV Tendril Start", BossAttacks.PureVessel.RunTendrilStart(self)),
+                ("PV Tendril Hit", BossAttacks.PureVessel.RunTendrilHit(self)),
+                ("PV Tendril T2", BossAttacks.PureVessel.RunTendrilT2(self)),
+                ("PV Tendril T3", BossAttacks.PureVessel.RunTendrilT3(self)),
+                ("PV Tendril Hit End", BossAttacks.PureVessel.RunTendrilHitEnd(self)),
+                ("PV Tendril Recover", BossAttacks.PureVessel.RunTendrilRecover(self))
+            ]).AddTransition("FINISHED", "Spit Recover");
+            //wait fuck it isn't that simple, phase 2 and 3 attach to Spit 1 but phase 4 deviates from Spit Antic
 
 
 
@@ -303,23 +337,28 @@ namespace GhostPlando.Modules {
             //testing mantis lords discs
             //self.GetState("Spit 1").AddFirstActions(BossAttacks.MantisLords.Run(self));
 
-            //testing traitor lord shockwave
-            //self.GetState("Land 2").AddLastActions(BossAttacks.TraitorLord.RunShockwave(self));
-
-            //testing grimm firebats
-            FsmState firebat1 = self.AddState("Firebat 1");
-            FsmState firebat2 = self.AddState("Firebat 2");
-            FsmState firebat3 = self.AddState("Firebat 3");
-            FsmState spitAnticState = self.GetState("Spit Antic");
+            //testing grimm firebats and pure vessel void tendrils
+            //FsmState firebat1 = self.AddState("Firebat 1");
+            /*FsmState spitAnticState = self.GetState("Spit Antic");
             spitAnticState.RemoveTransitionsTo("Spit 1");
-            spitAnticState.AddTransition("FINISHED", firebat1);
-            firebat1.AddTransition("FINISHED", firebat2);
-            firebat2.AddTransition("FINISHED", firebat3);
-            firebat3.AddTransition("FINISHED", "Spit Recover");
+            //spitAnticState.AddTransition("FINISHED", firebat1);
+            //firebat1.Actions = BossAttacks.Grimm.RunFirebats(self, 0.3f, 1, -2, false);
+            //firebat2.Actions = BossAttacks.Grimm.RunFirebats(self, 0.3f, 1.1f, false);
+            //firebat3.Actions = BossAttacks.Grimm.RunFirebats(self, 0.6f, 1.2f, true);
+            //firebat3.AddLastActions(BossAttacks.PureVessel.RunTendrilAntic(self));
 
-            firebat1.Actions = BossAttacks.Grimm.RunFirebats(self, 0.6f, 1, false);
-            firebat2.Actions = BossAttacks.Grimm.RunFirebats(self, 0.3f, 1.1f, false);
-            firebat3.Actions = BossAttacks.Grimm.RunFirebats(self, 0.6f, 1.2f, true);
+            spitAnticState.ChainFsmStates([
+                ("Firebat 1", BossAttacks.Grimm.RunFirebats(self, 0.3f, 1, -2, false)),
+                ("Firebat 2", BossAttacks.Grimm.RunFirebats(self, 0.3f, 1.1f, 0, false)),
+                ("Firebat 3", BossAttacks.Grimm.RunFirebats(self, 0.3f, 1.2f, -2, true).Concat(BossAttacks.PureVessel.RunTendrilAntic(self)).ToArray()),
+                ("PV Tendril Burst", BossAttacks.PureVessel.RunTendrilBurst(self)),
+                ("PV Tendril Start", BossAttacks.PureVessel.RunTendrilStart(self)),
+                ("PV Tendril Hit", BossAttacks.PureVessel.RunTendrilHit(self)),
+                ("PV Tendril T2", BossAttacks.PureVessel.RunTendrilT2(self)),
+                ("PV Tendril T3", BossAttacks.PureVessel.RunTendrilT3(self)),
+                ("PV Tendril Hit End", BossAttacks.PureVessel.RunTendrilHitEnd(self)),
+                ("PV Tendril Recover", BossAttacks.PureVessel.RunTendrilRecover(self))
+            ]).AddTransition("FINISHED", "Spit Recover");*/
         }
 
         private void EditArena(On.GameManager.orig_OnNextLevelReady orig, GameManager self) {
@@ -367,6 +406,19 @@ namespace GhostPlando.Modules {
                 ("d_break_0043_deep_cocoon_break1 (6)", new Vector3(104.57f, 3.14f, -6.88f))
             })
                 GameObject.Find(name).transform.position = position;
+        }
+
+        private void RemoveBossTitle(On.PlayMakerFSM.orig_OnEnable orig, PlayMakerFSM self) {
+            orig(self);
+            if(self.FsmName == "Area Title Control") {
+                FsmState visitedCheck = self.GetState("Visited Check");
+                visitedCheck.AddTransition("SKIP", "Done");
+                visitedCheck.AddFirstAction(new Lambda(() => {
+                    if(GameManager.instance.sceneName == "Deepnest_32") {
+                        self.SendEvent("SKIP");
+                    }
+                }));
+            }
         }
     }
 }

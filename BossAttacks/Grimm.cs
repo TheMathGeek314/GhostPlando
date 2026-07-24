@@ -120,13 +120,13 @@ namespace GhostPlando.BossAttacks {
                 },
                 new Wait {
                     time = 0.4f,
-                    finishEvent = FsmEvent.GetFsmEvent("FINISHED"),
+                    finishEvent = FsmEvent.Finished,
                     realTime = false
                 }
             ];
         }
 
-        public static FsmStateAction[] RunFirebats(PlayMakerFSM self, float waitTime, float pitch, bool isSlower) {
+        public static FsmStateAction[] RunFirebats(PlayMakerFSM self, float waitTime, float pitch, float height, bool isSlower) {
             return [
                 new Lambda(() => {
                     self.FsmVariables.GetFsmFloat("Firebat speed").Value = (HeroController.instance.transform.position.x >= self.FsmVariables.GetFsmGameObject("Self").Value.transform.position.x ? 25 : -25) * (isSlower ? 0.75f : 1);
@@ -134,7 +134,7 @@ namespace GhostPlando.BossAttacks {
                 new SpawnObjectFromGlobalPool {
                     gameObject = batObject,
                     spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
-                    position = new Vector3(0, -2, 0),
+                    position = new Vector3(0, height, 0),
                     rotation = Vector3.zero,
                     storeObject = self.FsmVariables.GetFsmGameObject("Grimm Projectile")
                 },
@@ -161,7 +161,7 @@ namespace GhostPlando.BossAttacks {
                 },
                 new Wait {
                     time = waitTime,
-                    finishEvent = FsmEvent.GetFsmEvent("FINISHED"),
+                    finishEvent = FsmEvent.Finished,
                     realTime = false
                 },
                 new AudioPlayerOneShotSingle {

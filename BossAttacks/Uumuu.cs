@@ -50,7 +50,7 @@ namespace GhostPlando.BossAttacks {
                 },
                 new Wait {
                     time = 0.3f,
-                    finishEvent = FsmEvent.GetFsmEvent("FINISHED"),
+                    finishEvent = FsmEvent.Finished,
                     realTime = false
                 }
             ];

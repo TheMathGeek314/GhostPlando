@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using ItemChanger.Extensions;
@@ -8,12 +9,18 @@ namespace GhostPlando.BossAttacks {
     internal class WDefender {
         internal static GameObject defenderPrefab;
         internal static GameObject pillarObject;
+        internal static GameObject ballObject;
         internal static Object bounceAudio;
+        internal static Object ballAudio;
 
         public static void Hook(PlayMakerFSM nosk) {
-            FsmState pillarState = defenderPrefab.LocateMyFSM("Dung Defender").GetState("Pillar");
+            PlayMakerFSM wdFsm = defenderPrefab.LocateMyFSM("Dung Defender");
+            FsmState pillarState = wdFsm.GetState("Pillar");
             bounceAudio = pillarState.GetFirstActionOfType<AudioPlayerOneShotSingle>().audioClip.Value;
             pillarObject = pillarState.GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
+            FsmState eruptState = wdFsm.GetState("Erupt Out");
+            ballObject = eruptState.GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
+            ballAudio = wdFsm.GetState("First?").GetFirstActionOfType<AudioPlaySimple>().oneShotClip.Value;
             
             PlayMakerFSM pillarFsm = nosk.gameObject.AddComponent<PlayMakerFSM>();
             pillarFsm.FsmName = "White Defender Pillars";
@@ -32,6 +39,7 @@ namespace GhostPlando.BossAttacks {
             pillarFsm.AddFsmFloat("Pillar X L", 0f);
             pillarFsm.AddFsmFloat("Pillar X R", 0f);
             pillarFsm.AddFsmInt("Pillars Remaining", 15);
+            nosk.AddFsmGameObject("WD Ball", null);
 
             setupState.Actions = [
                 new Lambda(() => {
@@ -128,7 +136,7 @@ namespace GhostPlando.BossAttacks {
                 },
                 new Wait {
                     time = 0.125f,
-                    finishEvent = FsmEvent.GetFsmEvent("FINISHED"),
+                    finishEvent = FsmEvent.Finished,
                     realTime = false
                 }
             ];
@@ -152,13 +160,52 @@ namespace GhostPlando.BossAttacks {
             return [
                 new BoolTest {
                     boolVariable = self.FsmVariables.GetFsmBool("Falling from Ceiling"),
-                    isFalse = FsmEvent.GetFsmEvent("FINISHED"),
+                    isFalse = FsmEvent.Finished,
                     everyFrame = false
                 },
                 new Lambda(() => {
                     self.gameObject.LocateMyFSM("White Defender Pillars").SendEvent("TRIGGER");
                 })
             ];
+        }
+
+        public static FsmStateAction[] RunFountain(PlayMakerFSM self) {
+            List<FsmStateAction> actions = [
+                new AudioPlayerOneShotSingle {
+                    audioPlayer = Modules.NoskBossModule.audioPlayer,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                    audioClip = ballAudio,
+                    pitchMin = 1,
+                    pitchMax = 1,
+                    volume = 1,
+                    delay = 0,
+                    storePlayer = self.FsmVariables.GetFsmGameObject("Empty Store")
+                }
+            ];
+            float[] velocities = [5, 10, 15, 20, 25, -5, -10, -15, -20, -25];
+            foreach(float velocity in velocities) {
+                actions.AddRange([
+                    new SpawnObjectFromGlobalPool {
+                        gameObject = ballObject,
+                        spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                        position = Vector3.zero,
+                        rotation = Vector3.zero,
+                        storeObject = self.FsmVariables.GetFsmGameObject("WD Ball")
+                    },
+                    new SetDamageHeroAmount {
+                        target = self.FsmGOToOwner("WD Ball"),
+                        damageDealt = 1
+                    },
+                    new SetVelocity2d {
+                        gameObject = self.FsmGOToOwner("WD Ball"),
+                        vector = Vector2.zero,
+                        x = velocity,
+                        y = 35,
+                        everyFrame = false
+                    }
+                ]);
+            }
+            return actions.ToArray();
         }
     }
 }
