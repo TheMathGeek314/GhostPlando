@@ -5,11 +5,11 @@ using ItemChanger.Internal;
 
 namespace GhostPlando {
     [Serializable]
-    public class EmbeddedDoorSprite: ISprite {
-        private static SpriteManager EmbeddedSpriteManager = new(typeof(EmbeddedDoorSprite).Assembly, "GhostPlando.Resources.Images.");
+    public class EmbeddedGhostSprite: ISprite {
+        private static SpriteManager EmbeddedSpriteManager = new(typeof(EmbeddedGhostSprite).Assembly, "GhostPlando.Resources.Images.");
         
         public string key;
-        public EmbeddedDoorSprite(string key) {
+        public EmbeddedGhostSprite(string key) {
             this.key = key;
         }
 

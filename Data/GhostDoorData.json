@@ -1,0 +1,202 @@
+[
+  {
+    "bossName": "Gruz_Mother",
+    "languageKey": "GRUZ",
+    "locationName": "Boss_Geo-Gruz_Mother",
+    "transform": {
+      "x": 120,
+      "y": 52,
+      "faceLeft": true
+    }
+  },
+  {
+    "bossName": "Vengefly_King",
+    "languageKey": "BIGBUZZ",
+    "locationName": "Boss_Geo-Vengefly_King",
+    "transform": {
+      "x": 108,
+      "y": 52,
+      "faceLeft": true
+    }
+  },
+  {
+    "bossName": "False_Knight",
+    "languageKey": "FKNIGHT",
+    "locationName": "City_Crest",
+    "transform": {
+      "x": 89,
+      "y": 44,
+      "faceLeft": true
+    }
+  },
+  {
+    "bossName": "Hornet_Protector",
+    "languageKey": "HORNET",
+    "locationName": "Mothwing_Cloak",
+    "transform": {
+      "x": 72,
+      "y": 44,
+      "faceLeft": true
+    }
+  },
+  {
+    "bossName": "Hornet_Sentinel",
+    "languageKey": "HORNET",
+    "locationName": "King's_Brand",
+    "transform": {
+      "x": 56,
+      "y": 49,
+      "faceLeft": true
+    }
+  },
+  {
+    "bossName": "Massive_Moss_Charger",
+    "languageKey": "MEGAMOSS",
+    "locationName": "Boss_Geo-Massive_Moss_Charger",
+    "transform": {
+      "x": 40,
+      "y": 49,
+      "faceLeft": true
+    }
+  },
+  {
+    "bossName": "Mantis_Lords",
+    "languageKey": "MANTISLORDS",
+    "locationName": "Mantis_Respect",
+    "transform": {
+      "x": 23,
+      "y": 49,
+      "faceLeft": true
+    }
+  },
+  {
+    "bossName": "Broken_Vessel",
+    "languageKey": "BROKENVESSEL",
+    "locationName": "Boss_Essence-Lost_Kin",
+    "transform": {
+      "x": 13.5,
+      "y": 53,
+      "faceLeft": true
+    }
+  },
+  {
+    "bossName": "Collector",
+    "languageKey": "COLLECTOR",
+    "locationName": "Collector's_Map",
+    "transform": {
+      "x": 61,
+      "y": 37,
+      "faceLeft": false
+    }
+  },
+  {
+    "bossName": "Crystal_Guardian",
+    "languageKey": "MEGABEAMMINER",
+    "locationName": "Boss_Geo-Enraged_Guardian",
+    "transform": {
+      "x": 53,
+      "y": 21,
+      "faceLeft": true
+    }
+  },
+  {
+    "bossName": "Uumuu",
+    "languageKey": "UMMU",
+    "locationName": "Journal_Entry-Charged_Lumafly",
+    "transform": {
+      "x": 39,
+      "y": 16,
+      "faceLeft": true
+    }
+  },
+  {
+    "bossName": "Dung_Defender",
+    "languageKey": "DUNGDEF",
+    "locationName": "Defender's_Crest",
+    "transform": {
+      "x": 23,
+      "y": 33,
+      "faceLeft": true
+    }
+  },
+  {
+    "bossName": "Watcher_Knights",
+    "languageKey": "WATCHERKNIGHTS",
+    "locationName": "Hallownest_Seal-Watcher_Knight",
+    "transform": {
+      "x": 7,
+      "y": 33,
+      "faceLeft": true
+    }
+  },
+  {
+    "bossName": "No_Eyes",
+    "languageKey": "GHOST_NOEYES",
+    "locationName": "Boss_Essence-No_Eyes",
+    "transform": {
+      "x": 23.6,
+      "y": 11,
+      "faceLeft": false
+    }
+  },
+  {
+    "bossName": "Galien",
+    "languageKey": "GHOST_GALIEN",
+    "locationName": "Boss_Essence-Galien",
+    "transform": {
+      "x": 56,
+      "y": 11,
+      "faceLeft": false
+    }
+  },
+  {
+    "bossName": "Markoth",
+    "languageKey": "GHOST_MARKOTH",
+    "locationName": "Boss_Essence-Markoth",
+    "transform": {
+      "x": 67,
+      "y": 16,
+      "faceLeft": false
+    }
+  },
+  {
+    "bossName": "Xero",
+    "languageKey": "GHOST_XERO",
+    "locationName": "Boss_Essence-Xero",
+    "transform": {
+      "x": 83,
+      "y": 16,
+      "faceLeft": false
+    }
+  },
+  {
+    "bossName": "Gorb",
+    "languageKey": "GHOST_GORB",
+    "locationName": "Boss_Essence-Gorb",
+    "transform": {
+      "x": 103,
+      "y": 16,
+      "faceLeft": false
+    }
+  },
+  {
+    "bossName": "Elder_Hu",
+    "languageKey": "GHOST_HU",
+    "locationName": "Boss_Essence-Elder_Hu",
+    "transform": {
+      "x": 85,
+      "y": 3.85,
+      "faceLeft": false
+    }
+  },
+  {
+    "bossName": "Grimm",
+    "languageKey": "GRIM",
+    "locationName": "Charm_Notch-Grimm",
+    "transform": {
+      "x": 117,
+      "y": 4,
+      "faceLeft": false
+    }
+  }
+]

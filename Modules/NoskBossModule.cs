@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using TMPro;
 using UnityEngine;
 using HutongGames.PlayMaker;
@@ -7,15 +6,13 @@ using HutongGames.PlayMaker.Actions;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
 using ItemChanger.Modules;
-using System;
 
 namespace GhostPlando.Modules {
     internal class NoskBossModule: Module {
         internal static GameObject titlePrefab;
         internal static GameObject titleFaderPrefab;
-        /*private const string titleName = "Nosk Title";
-        private const string titleFaderName = "Nosk Title Fader";*/
         internal static GameObject audioPlayer;
+        internal static GameObject wingedNoskPrefab;
         private int[] phaseHpHits = [25, 50, 45, 45, 45, 45];
 
         public override void Initialize() {
@@ -35,11 +32,13 @@ namespace GhostPlando.Modules {
         }
 
         private string LanguageGet(On.Language.Language.orig_Get_string_string orig, string key, string sheetTitle) {
-            if(sheetTitle == "Titles") {
-                if(key == "NIGHTMARE_GRIMM_MAIN")
-                    return "Nosk";
-                if(key == "NIGHTMARE_GRIMM_SUPER")
-                    return "Mimic Paragon";
+            if(GameManager.instance.sceneName == "Deepnest_32") {
+                if(sheetTitle == "Titles") {
+                    if(key == "NIGHTMARE_GRIMM_MAIN")
+                        return "Nosk";
+                    if(key == "NIGHTMARE_GRIMM_SUPER")
+                        return "Mimic Paragon";
+                }
             }
             return orig(key, sheetTitle);
         }
@@ -72,90 +71,30 @@ namespace GhostPlando.Modules {
                 FsmState roarEnd = self.GetState("Roar End");
                 FsmState trans1 = self.GetState("Trans 1");
                 roarEnd.AddLastActions(FsmEdits.RoarEndActions(self, title, fader, trans1));
-                /*new List<FsmStateAction> {
-                    new Wait {
-                        time = 2.5f,
-                        finishEvent = FsmEvent.Finished,
-                        realTime = false
-                    },
-                    new Lambda(() => {
-                        Vector3 titlePosition = GameCameras.instance.mainCamera.transform.position + new Vector3(-0.4479f, 4.8225f, 0);
-                        title.transform.position = new Vector3(titlePosition.x, titlePosition.y, -1.695f);
-                        fader.transform.position = title.transform.position + new Vector3(0.5f, -2.67f, -8.93f);
-                        fader.transform.localScale = new Vector3(37.6446f, 26.62126f, 1);
-                    }),
-                    new ActivateGameObject {
-                        gameObject = self.FsmGOToOwner("Nosk Title Fader"),
-                        activate = true,
-                        recursive = false,
-                        resetOnExit = false,
-                        everyFrame = false
-                    },
-                    new ActivateGameObject {
-                        gameObject = self.FsmGOToOwner("Nosk Title"),
-                        activate = true,
-                        recursive = false,
-                        resetOnExit = false,
-                        everyFrame = false
-                    },
-                    new TransitionToAudioSnapshot {
-                        snapshot = trans1.GetFirstActionOfType<TransitionToAudioSnapshot>().snapshot,
-                        transitionTime = 0
-                    },
-                    new ApplyMusicCue {
-                        musicCue = trans1.GetFirstActionOfType<ApplyMusicCue>().musicCue,
-                        delayTime = 0,
-                        transitionTime = 0
-                    }
-                }.ForEach(action => roarEnd.AddLastAction(action));*/
                 trans1.GetFirstActionOfType<TransitionToAudioSnapshot>().Enabled = false;
                 trans1.GetFirstActionOfType<ApplyMusicCue>().Enabled = false;
                 self.GetState("Roar Init").AddFirstActions(FsmEdits.RoarInitActions(self));
-                /*roarInit.AddFirstAction(new SendEventByName {
-                    eventTarget = new FsmEventTarget {
-                        target = FsmEventTarget.EventTarget.GameObject,
-                        gameObject = self.FsmGOToOwner(titleName),
-                        sendToChildren = true
-                    },
-                    sendEvent = "DOWN",
-                    delay = 0,
-                    everyFrame = false
-                });
-                roarInit.InsertAction(new iTweenFadeTo {
-                    gameObject = self.FsmGOToOwner(titleFaderName),
-                    alpha = 0,
-                    includeChildren = true,
-                    namedValueColor = "_Color",
-                    time = 0.1f,
-                    delay = 0,
-                    easeType = iTween.EaseType.linear,
-                    loopType = iTween.LoopType.none,
-                    finishEvent = FsmEvent.Finished,
-                    realTime = false,
-                    stopOnExit = true,
-                    loopDontFinish = false
-                }, 1);*/
             }
 
-            //int hp = phaseHpHits[5] * 5;
-            //self.AddFsmInt("Phase 5-6 HP", hp); This should be on the Winged Nosk object, not here
-            //hp += phaseHpHits[4] * 5;
-            //start Winged Nosk with {hp} health
-            string debugPhases;
-            int hp = phaseHpHits[3] * 5;
-            debugPhases = $"phase 4 starts at {hp}";
+            int hp = phaseHpHits[5] * 5;
+            //winged nosk phase 5-6
+            hp += phaseHpHits[4] * 5;
+            self.AddFsmInt("Phase 4-5 HP", hp);
+            Modding.Logger.Log($"Phase 4-5 transition at {hp} hp");
+            hp += phaseHpHits[3] * 5;
             self.AddFsmInt("Phase 3-4 HP", hp);
             hp += phaseHpHits[2] * 5;
-            debugPhases = $"phase 3 starts at {hp}, {debugPhases}";
             self.AddFsmInt("Phase 2-3 HP", hp);
             hp += phaseHpHits[1] * 5;
-            debugPhases = $"phase 2 starts at {hp}, {debugPhases}";
             self.AddFsmInt("Phase 1-2 HP", hp);
             hp += phaseHpHits[0] * 5;
-            Modding.Logger.Log($"Nosk health starts at {hp}, {debugPhases}");
             self.gameObject.GetComponent<HealthManager>().hp = hp;
 
             audioPlayer = self.GetState("Trans 1").GetFirstActionOfType<AudioPlayerOneShotSingle>().audioPlayer.Value;
+
+            //Instantiate Winged Nosk, maybe pass reference into BossAttacks hooks, but don't enable yet
+            GameObject wosk = GameObject.Instantiate(wingedNoskPrefab, new Vector3(100, 25, wingedNoskPrefab.transform.position.z), Quaternion.identity);
+            self.AddFsmGameObject("Winged Nosk", wosk);
 
             BossAttacks.FalseKnight.Hook(self);
             BossAttacks.HornetP.Hook(self);
@@ -327,38 +266,6 @@ namespace GhostPlando.Modules {
                 ("PV Tendril Hit End", BossAttacks.PureVessel.RunTendrilHitEnd(self)),
                 ("PV Tendril Recover", BossAttacks.PureVessel.RunTendrilRecover(self))
             ]).AddTransition("FINISHED", "Spit Recover");
-            //wait fuck it isn't that simple, phase 2 and 3 attach to Spit 1 but phase 4 deviates from Spit Antic
-
-
-
-            //testing gorb spears
-            //self.GetState("Spit 1").AddFirstActions(BossAttacks.Gorb.RunSpears(self));
-
-            //testing mantis lords discs
-            //self.GetState("Spit 1").AddFirstActions(BossAttacks.MantisLords.Run(self));
-
-            //testing grimm firebats and pure vessel void tendrils
-            //FsmState firebat1 = self.AddState("Firebat 1");
-            /*FsmState spitAnticState = self.GetState("Spit Antic");
-            spitAnticState.RemoveTransitionsTo("Spit 1");
-            //spitAnticState.AddTransition("FINISHED", firebat1);
-            //firebat1.Actions = BossAttacks.Grimm.RunFirebats(self, 0.3f, 1, -2, false);
-            //firebat2.Actions = BossAttacks.Grimm.RunFirebats(self, 0.3f, 1.1f, false);
-            //firebat3.Actions = BossAttacks.Grimm.RunFirebats(self, 0.6f, 1.2f, true);
-            //firebat3.AddLastActions(BossAttacks.PureVessel.RunTendrilAntic(self));
-
-            spitAnticState.ChainFsmStates([
-                ("Firebat 1", BossAttacks.Grimm.RunFirebats(self, 0.3f, 1, -2, false)),
-                ("Firebat 2", BossAttacks.Grimm.RunFirebats(self, 0.3f, 1.1f, 0, false)),
-                ("Firebat 3", BossAttacks.Grimm.RunFirebats(self, 0.3f, 1.2f, -2, true).Concat(BossAttacks.PureVessel.RunTendrilAntic(self)).ToArray()),
-                ("PV Tendril Burst", BossAttacks.PureVessel.RunTendrilBurst(self)),
-                ("PV Tendril Start", BossAttacks.PureVessel.RunTendrilStart(self)),
-                ("PV Tendril Hit", BossAttacks.PureVessel.RunTendrilHit(self)),
-                ("PV Tendril T2", BossAttacks.PureVessel.RunTendrilT2(self)),
-                ("PV Tendril T3", BossAttacks.PureVessel.RunTendrilT3(self)),
-                ("PV Tendril Hit End", BossAttacks.PureVessel.RunTendrilHitEnd(self)),
-                ("PV Tendril Recover", BossAttacks.PureVessel.RunTendrilRecover(self))
-            ]).AddTransition("FINISHED", "Spit Recover");*/
         }
 
         private void EditArena(On.GameManager.orig_OnNextLevelReady orig, GameManager self) {

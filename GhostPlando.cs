@@ -10,7 +10,7 @@ namespace GhostPlando {
 
         public GhostPlando(): base("GhostPlando") {
             Instance = this;
-            DevPrep.OnConstructor();
+            RandoInterop.DefineDoors();
         }
         
         public override List<(string, string)> GetPreloadNames() {
@@ -35,18 +35,21 @@ namespace GhostPlando {
                 ("GG_Hollow_Knight", "Battle Scene/Focus Blasts/HK Prime Blast"),
                 ("Mines_18", "Laser Turret Mega (1)"),
                 ("Room_Final_Boss_Core", "Boss Control/Hollow Knight Boss"),
-                ("Fungus3_23_boss", "Battle Scene/Wave 3/Mantis Traitor Lord")
+                ("Fungus3_23_boss", "Battle Scene/Wave 3/Mantis Traitor Lord"),
+                ("GG_Nosk_Hornet", "Battle Scene/Hornet Nosk")
             ];
         }
 
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects) {
             AssignPrefabs(preloadedObjects);
+            RandoInterop.Hook();
             DevPrep.OnInitialize();
         }
 
         private void AssignPrefabs(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects) {
             Modules.NoskBossModule.titlePrefab = preloadedObjects["Grimm_Nightmare"]["Grimm Control/Appear Scene/Title"];
             Modules.NoskBossModule.titleFaderPrefab = preloadedObjects["Grimm_Nightmare"]["Grimm Control/Appear Scene/black_fader"];
+            Modules.NoskBossModule.wingedNoskPrefab = preloadedObjects["GG_Nosk_Hornet"]["Battle Scene/Hornet Nosk"];
             BossAttacks.FalseKnight.summonPrefab = preloadedObjects["Crossroads_10_boss"]["Battle Scene/FK Barrel Summon"];
             BossAttacks.HornetP.hornetPrefab = preloadedObjects["Fungus1_04_boss"]["Hornet Boss 1"];
             BossAttacks.SoulMaster.mageLordPrefab = preloadedObjects["Ruins1_24_boss"]["Mage Lord"];

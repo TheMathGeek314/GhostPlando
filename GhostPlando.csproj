@@ -64,6 +64,12 @@
     <EmbeddedResource Include="Resources\Audio\*.wav" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Data\GhostDoorData.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Data\GhostDoorData.json" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="AccessRandomizer">
       <HintPath>..\_dependencies\AccessRandomizer.dll</HintPath>
     </Reference>
