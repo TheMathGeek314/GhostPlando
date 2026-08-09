@@ -21,6 +21,7 @@ namespace GhostPlando.Modules {
             On.PlayMakerFSM.OnEnable += EditNosk;
             On.GameManager.OnNextLevelReady += EditArena;
             On.PlayMakerFSM.OnEnable += RemoveBossTitle;
+            On.PlayMakerFSM.OnEnable += EditWingedNosk;
         }
 
         public override void Unload() {
@@ -29,6 +30,7 @@ namespace GhostPlando.Modules {
             On.PlayMakerFSM.OnEnable -= EditNosk;
             On.GameManager.OnNextLevelReady -= EditArena;
             On.PlayMakerFSM.OnEnable -= RemoveBossTitle;
+            On.PlayMakerFSM.OnEnable -= EditWingedNosk;
         }
 
         private string LanguageGet(On.Language.Language.orig_Get_string_string orig, string key, string sheetTitle) {
@@ -76,11 +78,8 @@ namespace GhostPlando.Modules {
                 self.GetState("Roar Init").AddFirstActions(FsmEdits.RoarInitActions(self));
             }
 
-            int hp = phaseHpHits[5] * 5;
-            //winged nosk phase 5-6
-            hp += phaseHpHits[4] * 5;
+            int hp = (phaseHpHits[5] + phaseHpHits[4]) * 5;
             self.AddFsmInt("Phase 4-5 HP", hp);
-            Modding.Logger.Log($"Phase 4-5 transition at {hp} hp");
             hp += phaseHpHits[3] * 5;
             self.AddFsmInt("Phase 3-4 HP", hp);
             hp += phaseHpHits[2] * 5;
@@ -89,10 +88,11 @@ namespace GhostPlando.Modules {
             self.AddFsmInt("Phase 1-2 HP", hp);
             hp += phaseHpHits[0] * 5;
             self.gameObject.GetComponent<HealthManager>().hp = hp;
+            //TEMPORARY FOR WINGED NOSK TESTING aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+            //self.gameObject.GetComponent<HealthManager>().hp = 453;
 
             audioPlayer = self.GetState("Trans 1").GetFirstActionOfType<AudioPlayerOneShotSingle>().audioPlayer.Value;
 
-            //Instantiate Winged Nosk, maybe pass reference into BossAttacks hooks, but don't enable yet
             GameObject wosk = GameObject.Instantiate(wingedNoskPrefab, new Vector3(100, 25, wingedNoskPrefab.transform.position.z), Quaternion.identity);
             self.AddFsmGameObject("Winged Nosk", wosk);
 
@@ -109,7 +109,7 @@ namespace GhostPlando.Modules {
             BossAttacks.ElderHu.Hook(self);
             BossAttacks.Grimm.Hook(self);
             BossAttacks.PureVessel.Hook(self);
-            BossAttacks.CGuardian.Hook(self);
+            BossAttacks.CGuardian.HookNosk(self);
             BossAttacks.HollowKnight.Hook(self);
             BossAttacks.TraitorLord.Hook(self);
 
@@ -117,7 +117,7 @@ namespace GhostPlando.Modules {
             self.GetState("Spit Antic").GetFirstActionOfType<SetPosition>().y.Value = 4.84f;
             self.GetState("Roof Jump?").GetFirstActionOfType<IntCompare>().integer2 = self.FsmVariables.GetFsmInt("Phase 1-2 HP");
             self.GetState("Rising").GetFirstActionOfType<GetVelocity2d>().Enabled = true;
-            self.GetState("Idle").AddFirstAction(new GetHP { target = self.FsmGOToOwner("Self"), storeValue = self.FsmVariables.GetFsmInt("HP") });
+            self.GetState("Idle").AddFirstActions(FsmEdits.IdleActions(self));
 
             //nonspecific supplemental edits
             GameObject zeroOrigin = new();
@@ -266,6 +266,21 @@ namespace GhostPlando.Modules {
                 ("PV Tendril Hit End", BossAttacks.PureVessel.RunTendrilHitEnd(self)),
                 ("PV Tendril Recover", BossAttacks.PureVessel.RunTendrilRecover(self))
             ]).AddTransition("FINISHED", "Spit Recover");
+
+            //transition to winged form
+            FsmState mutateAntic = self.AddState("Mutate Antic");
+            FsmState mutateJump = self.AddState("Mutate Jump");
+            FsmState mutateWait = self.AddState("Mutate Wait");
+            FsmState mutateSwitch = self.AddState("Mutate Switch");
+            self.GetState("Idle").AddTransition("WINGIFY", mutateAntic);
+            mutateAntic.AddTransition("FINISHED", mutateJump);
+            mutateJump.AddTransition("LAND", mutateWait);
+            mutateWait.AddTransition("FINISHED", mutateSwitch);
+
+            mutateAntic.Actions = FsmEdits.MutateAnticActions(self);
+            mutateJump.Actions = FsmEdits.MutateJumpActions(self);
+            mutateWait.Actions = FsmEdits.MutateWaitActions(self);
+            mutateSwitch.Actions = FsmEdits.MutateSwitchActions(self, self.FsmVariables.GetFsmInt("Phase 4-5 HP").Value);
         }
 
         private void EditArena(On.GameManager.orig_OnNextLevelReady orig, GameManager self) {
@@ -326,6 +341,75 @@ namespace GhostPlando.Modules {
                     }
                 }));
             }
+        }
+
+        private void EditWingedNosk(On.PlayMakerFSM.orig_OnEnable orig, PlayMakerFSM self) {
+            orig(self);
+            if(self.gameObject.scene.name != "Deepnest_32" || !self.gameObject.name.StartsWith("Hornet Nosk") || self.FsmName != "Hornet Nosk")
+                return;
+
+            BossAttacks.CGuardian.HookWosk(self);
+            BossAttacks.Markoth.Hook(self);
+
+            self.AddFsmGameObject("Empty Store", null);
+
+            //generic/boundary edits
+            self.GetState("Init").GetFirstActionOfType<GetParent>().Enabled = false;
+            FsmState setPosState = self.GetState("Set Pos");
+            SetPosition sp = setPosState.GetFirstActionOfType<SetPosition>();
+            sp.x.Value = 100;
+            sp.y.Value = 22.5f;
+            setPosState.GetFirstActionOfType<SetFsmGameObject>().Enabled = false;
+            FsmState hpState = self.GetState("HP");
+            hpState.RemoveTransitionsOn("FINISHED");
+            hpState.AddTransition("FINISHED", "Set Pos");
+            FsmVariables fv = self.FsmVariables;
+            fv.GetFsmFloat("Swoop Height").Value = 5.9f;
+            fv.GetFsmFloat("X Min").Value = 80f;
+            fv.GetFsmFloat("X Max").Value = 110f;
+            fv.GetFsmFloat("Y Min").Value = 7.65f;
+            fv.GetFsmFloat("Y Max").Value = 10.65f;
+            self.GetState("Swoop L").GetFirstActionOfType<FloatCompare>().float2.Value = 85f;
+            self.GetState("Swoop R").GetFirstActionOfType<FloatCompare>().float2.Value = 106f;
+            self.GetState("Shift Down?").GetFirstActionOfType<FloatCompare>().float2.Value = 10.42f;
+            self.GetState("Roof Impact").GetFirstActionOfType<SetPosition>().y.Value = 25f;
+            self.GetState("Roof Return").GetFirstActionOfType<SetPosition>().y.Value = 24f;
+
+            //entrance and intermediate phase
+            FsmState initVelState = self.GetState("Init Velocity");
+            initVelState.GetFirstActionOfType<SetVelocity2d>().vector.Value = new Vector2(0, -32);
+            initVelState.GetFirstActionOfType<Wait>().time.Value = 2;
+            initVelState.GetFirstActionOfType<DecelerateXY>().decelerationY.Value = 0.95f;
+
+            FsmState thkSprayState = self.AddState("THK Spray");
+            FsmState thkLoopState = self.AddState("THK Spray Loop");
+            FsmState thkPrepState = self.AddState("THK Spray Prep");
+            initVelState.RemoveTransitionsOn("FINISHED");
+            initVelState.AddTransition("FINISHED", thkPrepState);
+            thkPrepState.AddTransition("FINISHED", thkSprayState);
+            thkSprayState.AddTransition("LOOP", thkLoopState);
+            thkLoopState.AddTransition("FINISHED", thkSprayState);
+            thkSprayState.AddTransition("END", "Idle");
+
+            self.AddFsmFloat("THK Chest Shot Time", 0);
+            thkPrepState.Actions = BossAttacks.HollowKnight.PrepSpray(self);
+            thkSprayState.Actions = BossAttacks.HollowKnight.RunSpray(self);
+
+
+
+
+            //testing crystal guardian laser
+            self.GetState("Init").AddLastActions(BossAttacks.CGuardian.InitDirectLaser(self));
+            FsmState summonRoarState = self.GetState("Summon Roar");
+            summonRoarState.RemoveTransitionsTo("Summon");
+            summonRoarState.ChainFsmStates(
+                ("CG Laser Prep", BossAttacks.CGuardian.PrepDirectLaser(self)),
+                ("CG Laser Fire", BossAttacks.CGuardian.FireDirectLaser(self)),
+                ("CG Laser End", BossAttacks.CGuardian.EndDirectLaser(self))
+            ).AddTransition("FINISHED", "Summon");
+
+            //testing markoth nails (depends on CG Ray Vector)
+            self.GetState("CG Laser Prep").AddLastActions(BossAttacks.Markoth.RunNails(self));
         }
     }
 }

@@ -34,19 +34,19 @@ namespace GhostPlando {
             string jsonName = assembly.GetManifestResourceNames().Single(str => str.EndsWith("GhostDoorData.json"));
             using Stream doorDataStream = assembly.GetManifestResourceStream(jsonName);
             foreach(GhostDoorData data in new ParseJson(doorDataStream).parseFile<GhostDoorData>()) {
-                Modding.Logger.Log(data.languageKey);
+                string bossNameSpaces = data.bossName.Replace("_", " ");
                 DoorData.DoorInfo.Location mainDoor = new() {
                     SceneName = "Deepnest_31",
                     GateName = "right2",
                     NoKeyDesc = currentEntrySheets["CP3"]["GG_LOCKED_DESC_" + data.languageKey],
-                    KeyDesc = $"The spirit of {data.bossName} seeks justice.<br>Insert key?",
+                    KeyDesc = $"The spirit of {bossNameSpaces} seeks justice.<br>Insert key?",
                     FadeOutOnOpen = true,
                     RequiresLantern = false,
                     X = data.transform.x,
                     Y = data.transform.y + 2.4f
                 };
                 string doorName = "Nosk" + data.bossName.Replace("_", "");
-                string keyName = $"Nosk_{data.bossName}_Key";
+                string keyName = $"Mysterious_Key_({data.bossName})";
                 DoorData ddata = new() {
                     CamelCaseName = doorName,
                     UpperCaseName = doorName.ToUpper(),
@@ -60,8 +60,8 @@ namespace GhostPlando {
                     Key = new() {
                         ItemName = "MoreDoors-" + keyName,
                         UIItemName = keyName.Replace("_", " "),
-                        InvDesc = $"The spirit of {data.bossName} seeks justice.",
-                        UsedInvDesc = $"For {data.bossName}.",
+                        InvDesc = $"The spirit of {bossNameSpaces} seeks justice.",
+                        UsedInvDesc = $"For {bossNameSpaces}.",
                         Sprite = new EmbeddedGhostSprite("NoskKey")
                     },
                     NoRando = true

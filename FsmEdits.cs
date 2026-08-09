@@ -173,5 +173,105 @@ namespace GhostPlando {
                 })
             ];
         }
+
+        public static FsmStateAction[] IdleActions(PlayMakerFSM self) {
+            return [
+                new GetHP {
+                    target = self.FsmGOToOwner("Self"),
+                    storeValue = self.FsmVariables.GetFsmInt("HP")
+                },
+                new IntCompare {
+                    integer1 = self.FsmVariables.GetFsmInt("HP"),
+                    integer2 = self.FsmVariables.GetFsmInt("Phase 4-5 HP"),
+                    lessThan = FsmEvent.GetFsmEvent("WINGIFY"),
+                    equal = FsmEvent.GetFsmEvent("WINGIFY"),
+                    everyFrame = false
+                }
+            ];
+        }
+
+        public static FsmStateAction[] MutateAnticActions(PlayMakerFSM self) {
+            return [
+                new Tk2dPlayAnimationWithEvents {
+                    gameObject = self.FsmGOToOwner("Self"),
+                    clipName = "Antic",
+                    animationCompleteEvent = FsmEvent.Finished
+                },
+                new FaceObject {
+                    objectA = self.FsmVariables.GetFsmGameObject("Self"),
+                    objectB = HeroController.instance.gameObject,
+                    spriteFacesRight = false,
+                    playNewAnimation = false,
+                    resetFrame = false,
+                    everyFrame = false
+                }
+            ];
+        }
+
+        public static FsmStateAction[] MutateJumpActions(PlayMakerFSM self) {
+            return [
+                new SetGravity2dScale {
+                    gameObject = self.FsmGOToOwner("Self"),
+                    gravityScale = 0
+                },
+                new AudioPlaySimple {
+                    gameObject = self.FsmGOToOwner("Self"),
+                    volume = 1,
+                    oneShotClip = self.GetState("RS Jump").GetFirstActionOfType<AudioPlaySimple>().oneShotClip
+                },
+                new Tk2dPlayAnimation {
+                    gameObject = self.FsmGOToOwner("Self"),
+                    animLibName = "",
+                    clipName = "Jump"
+                },
+                new GetPosition {
+                    gameObject = self.FsmGOToOwner("Self"),
+                    vector = Vector3.zero,
+                    x = 0,
+                    y = self.FsmVariables.GetFsmFloat("Self Y"),
+                    z = 0,
+                    space = Space.World,
+                    everyFrame = true
+                },
+                new FloatCompare {
+                    float1 = self.FsmVariables.GetFsmFloat("Self Y"),
+                    float2 = self.FsmVariables.GetFsmFloat("Roof Y"),
+                    tolerance = 0,
+                    greaterThan = FsmEvent.GetFsmEvent("LAND"),
+                    everyFrame = true
+                },
+                new SetVelocity2d {
+                    gameObject = self.FsmGOToOwner("Self"),
+                    vector = Vector2.zero,
+                    x = 0,
+                    y = 55,
+                    everyFrame = false
+                }
+            ];
+        }
+
+        public static FsmStateAction[] MutateWaitActions(PlayMakerFSM self) {
+            return [
+                new Lambda(() => {
+                    self.gameObject.GetComponent<HealthManager>().IsInvincible = true;
+                }),
+                new Wait {
+                    time = 1,
+                    finishEvent = FsmEvent.Finished,
+                    realTime = false
+                }
+            ];
+        }
+
+        public static FsmStateAction[] MutateSwitchActions(PlayMakerFSM self, int hp) {
+            return [
+                new Lambda(() => {
+                    GameObject wosk = self.FsmVariables.GetFsmGameObject("Winged Nosk").Value;
+                    wosk.GetComponent<HealthManager>().hp = hp;
+                    wosk.SetActive(true);
+                }),
+                new DestroySelf()
+            ];
+        }
     }
 }

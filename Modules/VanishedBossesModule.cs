@@ -2,17 +2,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using UnityEngine;
-using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
-using AccessRandomizer.IC;
-using AccessRandomizer.Settings;
 using ItemChanger;
 using ItemChanger.Extensions;
+using ItemChanger.Internal;
 using ItemChanger.Util;
 using LoreCore.Items;
-using MonoMod.Cil;
 
 namespace GhostPlando.Modules {
     internal class VanishedBossesModule: ItemChanger.Modules.Module {
@@ -71,10 +69,6 @@ namespace GhostPlando.Modules {
 
         private PlayerData pd => PlayerData.instance;
 
-        private Hook respectHook;
-        private MethodInfo _toggleChallenge = typeof(RespectLocation).GetMethod("ToggleChallenge", BindingFlags.NonPublic | BindingFlags.Instance);
-        AccessSettings AccessManagerSettings;
-
         private ILHook listenHook;
         private MethodInfo _listenItem = typeof(PowerLoreItem).Assembly.GetType("LoreCore.Items.ListenItem").GetNestedType("<>c__DisplayClass9_0", BindingFlags.NonPublic).GetMethod("<PlayMakerFSM_OnEnable>b__0", BindingFlags.Instance | BindingFlags.NonPublic);
         
@@ -117,6 +111,13 @@ namespace GhostPlando.Modules {
                 self.GetState("Rest").GetFirstActionOfType<PlayerDataBoolTest>().Enabled = false;
                 self.GetState("Lord Def?").GetFirstActionOfType<PlayerDataBoolTest>().Enabled = false;
             }
+            if(self.gameObject.name == "Lords Undefeated Group" && self.FsmName == "FSM") {
+                self.GetState("Check").RemoveTransitionsOn("DESTROY");
+            }
+            if(self.gameObject.name == "Lords Defeated Group" && self.FsmName == "FSM") {
+                 PlayerDataBoolTest pdbt = self.GetState("Check").GetFirstActionOfType<PlayerDataBoolTest>();
+                pdbt.isTrue = pdbt.isFalse;
+            }
         }
 
         private void LateLoad(On.GameManager.orig_OnNextLevelReady orig, GameManager self) {
@@ -125,32 +126,22 @@ namespace GhostPlando.Modules {
                 foreach(string obj in objects)
                     GameObject.Find(obj).SetActive(false);
             }
+            if(self.sceneName == "Fungus2_15") {
+                Container c = Container.GetContainer(Container.Shiny);
+                GameObject shiny = c.GetNewContainer(new(c.Name, Ref.Settings.Placements["Mantis_Respect"], FlingType.DirectDeposit));
+                shiny.transform.position = new(30.2f, 7.4f);
+                shiny.SetActive(true);
+            }
         }
 
         private IEnumerator HookMods() {
             yield return null;
             
-            AccessManagerSettings = typeof(RespectLocation).Assembly.GetType("AccessRandomizer.Manager.AccessManager").GetProperty("Settings", BindingFlags.Public | BindingFlags.Static).GetValue(null) as AccessSettings;
-            respectHook = new Hook(_toggleChallenge, OnToggleChallenge);
-
             listenHook = new ILHook(_listenItem, OnListenEnable);
         }
 
         private void DisposeModHooks() {
-            respectHook.Dispose();
             listenHook.Dispose();
-        }
-
-        private void OnToggleChallenge(Action<RespectLocation, PlayMakerFSM> orig, RespectLocation self, PlayMakerFSM fsm) {
-            if(!AccessManagerSettings.Enabled || !AccessManagerSettings.MantisRespect)
-                return;
-            FsmState canTalk = fsm.GetState("Can Talk Bool?");
-            canTalk.RemoveTransitionsOn("TRUE");
-            canTalk.AddTransition("TRUE", "Idle 2");
-            Container c = Container.GetContainer(Container.Shiny);
-            GameObject shiny = c.GetNewContainer(new(c.Name, self.Placement, self.flingType));
-            shiny.transform.position = new(30.2f, 7.4f);
-            shiny.SetActive(true);
         }
 
         private void OnListenEnable(ILContext il) {

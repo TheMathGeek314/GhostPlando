@@ -19,6 +19,34 @@ namespace GhostPlando {
             return ff;
         }
 
+        public static FsmVector2 AddFsmVector2(this PlayMakerFSM fsm, string name, Vector2 value) {
+            FsmVector2 fv2 = new FsmVector2 {
+                Name = name,
+                Value = value
+            };
+
+            FsmVector2[] vectors = new FsmVector2[fsm.FsmVariables.Vector2Variables.Length + 1];
+            fsm.FsmVariables.Vector2Variables.CopyTo(vectors, 0);
+            vectors[vectors.Length - 1] = fv2;
+            fsm.FsmVariables.Vector2Variables = vectors;
+
+            return fv2;
+        }
+
+        public static FsmVector3 AddFsmVector3(this PlayMakerFSM fsm, string name, Vector3 value) {
+            FsmVector3 fv3 = new FsmVector3 {
+                Name = name,
+                Value = value
+            };
+
+            FsmVector3[] vectors = new FsmVector3[fsm.FsmVariables.Vector3Variables.Length + 1];
+            fsm.FsmVariables.Vector3Variables.CopyTo(vectors, 0);
+            vectors[vectors.Length - 1] = fv3;
+            fsm.FsmVariables.Vector3Variables = vectors;
+
+            return fv3;
+        }
+
         public static FsmOwnerDefault FsmGOToOwner(this PlayMakerFSM fsm, string name) {
             return new FsmOwnerDefault {
                 GameObject = fsm.FsmVariables.GetFsmGameObject(name),

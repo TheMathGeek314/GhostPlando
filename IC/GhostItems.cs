@@ -11,7 +11,7 @@ namespace GhostPlando {
             tag.Properties["PinSprite"] = new EmbeddedGhostSprite("Shadeless");
             UIDef = new MsgUIDef {
                 name = new BoxedString("Shadeless"),
-                shopDesc = new BoxedString("You weren't supposed to find this."),
+                shopDesc = new BoxedString("This item doesn't do anything other than inform the player that the Shadeless module is active."),
                 sprite = new EmbeddedGhostSprite("Shadeless")
             };
         }
@@ -24,7 +24,7 @@ namespace GhostPlando {
             tag.Properties["PinSprite"] = new EmbeddedGhostSprite("Incorporeal");
             UIDef = new MsgUIDef {
                 name = new BoxedString("Incorporeal"),
-                shopDesc = new BoxedString("This text should never appear."),
+                shopDesc = new BoxedString("This item also doesn't do anything besides visually hint to the player about their reduced damage and opacity."),
                 sprite = new EmbeddedGhostSprite("Incorporeal")
             };
         }
@@ -37,7 +37,7 @@ namespace GhostPlando {
             UIDef = new MsgUIDef {
                 name = new BoxedString("Impossible"),
                 shopDesc = new BoxedString("This item only exists to allow rando to generate with unreachable locations."),
-                sprite = new ItemChangerSprite("ShopIcons.")
+                sprite = new ItemChangerSprite("ShopIcons.Marker_R")
             };
         }
     }

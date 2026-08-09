@@ -70,9 +70,6 @@
     <EmbeddedResource Include="Data\GhostDoorData.json" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="AccessRandomizer">
-      <HintPath>..\_dependencies\AccessRandomizer.dll</HintPath>
-    </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>$(HollowKnightRefs)/Assembly-CSharp.dll</HintPath>
     </Reference>
@@ -366,5 +363,8 @@
     <None Include=".gitignore" />
     <None Include="ReadMe.md" />
     <None Include="Resources\.gitignore" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="ICDL Files\" />
   </ItemGroup>
 </Project>

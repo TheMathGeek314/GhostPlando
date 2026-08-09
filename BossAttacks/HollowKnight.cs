@@ -8,12 +8,16 @@ namespace GhostPlando.BossAttacks {
     internal class HollowKnight {
         internal static GameObject thkPrefab;
         internal static GameObject pillarObject;
+        internal static GameObject sprayObject;
         internal static Object pillarAudio;
+        internal static Object sprayAudio;
 
         public static void Hook(PlayMakerFSM nosk) {
             PlayMakerFSM thkfsm = thkPrefab.LocateMyFSM("Control");
             pillarObject = thkfsm.GetState("Plume Gen").GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
             pillarAudio = thkfsm.GetState("Plume Up").GetFirstActionOfType<AudioPlayerOneShotSingle>().audioClip.Value;
+            sprayObject = thkfsm.GetState("Chest Shot").GetFirstActionOfType<FlingObjectsFromGlobalPoolVel>().gameObject.Value;
+            sprayAudio = thkfsm.GetState("Burst Effect").GetFirstActionOfType<AudioPlayerOneShotSingle>().audioClip.Value;
             nosk.AddFsmGameObject("THK Pillar", null);
             nosk.AddFsmFloat("THK PillarL X", 0);
             nosk.AddFsmFloat("THK PillarR X", 0);
@@ -115,6 +119,99 @@ namespace GhostPlando.BossAttacks {
                     sendEvent = "THK PLUMES UP",
                     delay = 0f,
                     everyFrame = false
+                }
+            ];
+        }
+
+        public static FsmStateAction[] PrepSpray(PlayMakerFSM self) {
+            return [
+                new SetFloatValue {
+                    floatVariable = self.FsmVariables.GetFsmFloat("THK Chest Shot Time"),
+                    floatValue = 6,
+                    everyFrame = false
+                },
+                new SetVelocity2d {
+                    gameObject = self.FsmGOToOwner("Self"),
+                    vector = Vector2.zero,
+                    everyFrame = false
+                },
+                new AudioPlayerOneShotSingle {
+                    audioPlayer = Modules.NoskBossModule.audioPlayer,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                    audioClip = sprayAudio,
+                    pitchMin = 1,
+                    pitchMax = 1,
+                    volume = 1,
+                    delay = 0,
+                    storePlayer = self.FsmVariables.GetFsmGameObject("Empty Store")
+                },
+                new Tk2dPlayAnimation {
+                    gameObject = self.FsmGOToOwner("Self"),
+                    animLibName = "",
+                    clipName = "Roar"
+                }
+            ];
+        }
+
+        public static FsmStateAction[] RunSpray(PlayMakerFSM self) {
+            return [
+                new FlingObjectsFromGlobalPoolVel {
+                    gameObject = sprayObject,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                    position = new Vector3(0, 0, -0.004f),
+                    spawnMin = 1,
+                    spawnMax = 2,
+                    speedMinX = -1,
+                    speedMaxX = -20,
+                    speedMinY = 17,
+                    speedMaxY = 22,
+                    originVariationX = 0.5f,
+                    originVariationY = 0.5f
+                },
+                new Wait {
+                    time = 0.15f,
+                    finishEvent = FsmEvent.GetFsmEvent("LOOP"),
+                    realTime = false
+                },
+                new FlingObjectsFromGlobalPoolVel {
+                    gameObject = sprayObject,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                    position = new Vector3(0, 0, -0.004f),
+                    spawnMin = 1,
+                    spawnMax = 2,
+                    speedMinX = 1,
+                    speedMaxX = 20,
+                    speedMinY = 15,
+                    speedMaxY = 20,
+                    originVariationX = 0.5f,
+                    originVariationY = 0.5f
+                },
+                new FlingObjectsFromGlobalPool {
+                    gameObject = sprayObject,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                    position = new Vector3(0, 0, -0.004f),
+                    spawnMin = 1,
+                    spawnMax = 3,
+                    speedMin = 15,
+                    speedMax = 20,
+                    angleMin = 235,
+                    angleMax = 325,
+                    originVariationX = 0.5f,
+                    originVariationY = 0.5f
+                },
+                new FloatAdd {
+                    floatVariable = self.FsmVariables.GetFsmFloat("THK Chest Shot Time"),
+                    add = -1,
+                    everyFrame = true,
+                    perSecond = true
+                },
+                new FloatCompare {
+                    float1 = self.FsmVariables.GetFsmFloat("THK Chest Shot Time"),
+                    float2 = 0,
+                    tolerance = 0,
+                    equal = FsmEvent.GetFsmEvent("END"),
+                    lessThan = FsmEvent.GetFsmEvent("END"),
+                    everyFrame = true
                 }
             ];
         }

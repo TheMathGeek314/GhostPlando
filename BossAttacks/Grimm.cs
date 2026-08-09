@@ -28,7 +28,7 @@ namespace GhostPlando.BossAttacks {
             nosk.AddFsmGameObject("Grimm Projectile", null);
             nosk.AddFsmFloat("Firebat speed", 0);
 
-            GameObject spikeHolder = GameObject.Instantiate(spikeHolderPrefab, new Vector3(71.3f, 1.34f, 0), Quaternion.identity);
+            GameObject spikeHolder = GameObject.Instantiate(spikeHolderPrefab, new Vector3(70.3f, 1.34f, 0), Quaternion.identity);
             spikeHolder.SetActive(true);
             spikeHolder.GetComponent<PlayMakerFSM>().GetState("Ready").GetFirstActionOfType<SetPosition>().Enabled = false;
             nosk.AddFsmGameObject("Grimm Spike Holder", spikeHolder);
