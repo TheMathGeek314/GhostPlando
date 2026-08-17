@@ -126,7 +126,7 @@ namespace GhostPlando.BossAttacks {
             ];
         }
 
-        public static FsmStateAction[] RunFirebats(PlayMakerFSM self, float waitTime, float pitch, float height, bool isSlower) {
+        public static FsmStateAction[] RunFirebats(PlayMakerFSM self, float pitch, float height, bool isSlower) {
             return [
                 new Lambda(() => {
                     self.FsmVariables.GetFsmFloat("Firebat speed").Value = (HeroController.instance.transform.position.x >= self.FsmVariables.GetFsmGameObject("Self").Value.transform.position.x ? 25 : -25) * (isSlower ? 0.75f : 1);
@@ -160,7 +160,7 @@ namespace GhostPlando.BossAttacks {
                     everyFrame = false
                 },
                 new Wait {
-                    time = waitTime,
+                    time = 0.3f,
                     finishEvent = FsmEvent.Finished,
                     realTime = false
                 },

@@ -15,12 +15,11 @@ namespace GhostPlando.BossAttacks {
         internal const string angleName = "Hornet Protector Angle";
 
         public static void Hook(PlayMakerFSM nosk) {
-            GameObject hornet = GameObject.Instantiate(hornetPrefab);
             PlayMakerFSM hornetFsm = hornetPrefab.LocateMyFSM("Control");
             throwAudio = hornetFsm.GetState("Sphere A").GetFirstActionOfType<AudioPlaySimple>().oneShotClip.Value;
             throwAndReturnAudio = hornetFsm.GetState("Throw").GetFirstActionOfType<AudioPlaySimple>().oneShotClip.Value;
             //threadstorm
-            GameObject ball = GameObject.Instantiate(hornet.FindChild("Sphere Ball"), nosk.transform.position, Quaternion.identity, nosk.transform);
+            GameObject ball = GameObject.Instantiate(hornetPrefab.FindChild("Sphere Ball"), nosk.transform.position, Quaternion.identity, nosk.transform);
             PlayMakerFSM growFsm = ball.GetComponent<PlayMakerFSM>();
             FsmState growState = growFsm.GetState("Grow");
             FsmState waitState = growFsm.AddState("Delay");
@@ -49,21 +48,22 @@ namespace GhostPlando.BossAttacks {
             nosk.AddFsmGameObject(ballName, ball);
 
             //needle
-            GameObject needle = GameObject.Instantiate(hornet.FindChild("Needle"));
+            GameObject needle = GameObject.Instantiate(hornetPrefab.FindChild("Needle"));
             needle.GetComponent<MeshRenderer>().enabled = true;
             nosk.AddFsmFloat(angleName, 0);
             nosk.AddFsmGameObject(needleName, needle);
             //needle tink
-            GameObject tink = needle.FindChild("Needle Tink");
+            GameObject tink = GameObject.Instantiate(needle.FindChild("Needle Tink"));
             PlayMakerFSM tinkFsm = tink.GetComponent<PlayMakerFSM>();
             tinkFsm.GetState("Setup").GetFirstActionOfType<SetFsmGameObject>().Enabled = false;
+            tink.GetComponent<DeactivateIfPlayerdataTrue>().enabled = false;
+            tink.transform.parent = needle.transform;
             tink.SetActive(true);
             nosk.AddFsmGameObject(tinkName, tink);
             needle.GetComponent<PlayMakerFSM>().GetState("Notify").AddFirstAction(new Lambda(() => {
                 tink.GetComponent<BoxCollider2D>().enabled = false;
                 needle.SetActive(false);
             }));
-            GameObject.Destroy(hornet);
         }
 
         public static FsmStateAction[] RunThreadstorm(PlayMakerFSM self) {
@@ -108,7 +108,9 @@ namespace GhostPlando.BossAttacks {
                     GameObject needle = self.FsmVariables.GetFsmGameObject(needleName).Value;
                     needle.transform.position = self.transform.position + new Vector3(0, -1.5f, 0);
                     needle.SetActive(true);
-                    self.FsmVariables.GetFsmGameObject(tinkName).Value.GetComponent<BoxCollider2D>().enabled = true;
+                    GameObject tink = self.FsmVariables.GetFsmGameObject(tinkName).Value;
+                    tink.GetComponent<BoxCollider2D>().enabled = true;
+                    tink.SetActive(true);
                     FsmFloat angleFF = self.FsmVariables.GetFsmFloat(angleName);
                     angleFF.Value = (angleFF.Value > 90 && angleFF.Value <= 270) ? 180 : 0;
                 }),

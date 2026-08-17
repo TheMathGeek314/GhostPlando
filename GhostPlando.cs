@@ -19,12 +19,15 @@ namespace GhostPlando {
                 ("Cliffs_02_boss", "Warrior/Ghost Warrior Slug"),
                 ("Crossroads_10_boss", "Battle Scene/FK Barrel Summon"),
                 ("Deepnest_East_10", "Warrior/Ghost Warrior Markoth"),
+                ("Deepnest_East_Hornet", "Barb Region"),
+                ("Deepnest_East_Hornet_boss", "Hornet Boss 2"),
                 ("Dream_04_White_Defender", "White Defender"),
                 ("Fungus1_04_boss", "Hornet Boss 1"),
                 ("Fungus2_15_boss", "Mantis Battle/Battle Main/Mantis Lord"),
                 ("Fungus2_32", "Ring Holder"),
                 ("Fungus2_32", "Warrior/Ghost Warrior Hu"),
                 ("Fungus3_23_boss", "Battle Scene/Wave 3/Mantis Traitor Lord"),
+                ("Fungus3_archive_02", "Mega Jellyfish Multizaps"),
                 ("Fungus3_archive_02_boss", "Mega Jellyfish"),
                 ("GG_Hollow_Knight", "Battle Scene/Focus Blasts/HK Prime Blast"),
                 ("GG_Hollow_Knight", "Battle Scene/HK Prime"),
@@ -34,8 +37,9 @@ namespace GhostPlando {
                 ("Grimm_Main_Tent_boss", "Grimm Spike Holder"),
                 ("Grimm_Nightmare", "Grimm Control/Appear Scene/Title"),
                 ("Grimm_Nightmare", "Grimm Control/Appear Scene/black_fader"),
+                ("Hive_05", "Battle Scene"),
                 ("Mines_18", "Laser Turret Mega (1)"),
-                ("Mines_18_boss", "Mega Zombie Beam Miner (1)"),
+                ("Mines_32", "Battle Scene/Zombie Beam Miner Rematch"),
                 ("Room_Final_Boss_Core", "Boss Control/Hollow Knight Boss"),
                 ("Ruins1_24_boss", "Mage Lord"),
                 ("Ruins2_11_boss", "Battle Scene/Jar Collector")
@@ -52,17 +56,20 @@ namespace GhostPlando {
             Modules.NoskBossModule.titlePrefab = preloadedObjects["Grimm_Nightmare"]["Grimm Control/Appear Scene/Title"];
             Modules.NoskBossModule.wingedNoskPrefab = preloadedObjects["GG_Nosk_Hornet"]["Battle Scene/Hornet Nosk"];
             BossAttacks.BrokenVessel.vesselPrefab = preloadedObjects["Abyss_19"]["Infected Knight"];
-            BossAttacks.CGuardian.cgPrefab = preloadedObjects["Mines_18_boss"]["Mega Zombie Beam Miner (1)"];
             BossAttacks.CGuardian.turretPrefab = preloadedObjects["Mines_18"]["Laser Turret Mega (1)"];
             BossAttacks.Collector.collectorPrefab = preloadedObjects["Ruins2_11_boss"]["Battle Scene/Jar Collector"];
+            BossAttacks.EGuardian.egPrefab = preloadedObjects["Mines_32"]["Battle Scene/Zombie Beam Miner Rematch"];
             BossAttacks.ElderHu.huPrefab = preloadedObjects["Fungus2_32"]["Warrior/Ghost Warrior Hu"];
             BossAttacks.ElderHu.ringHolderPrefab = preloadedObjects["Fungus2_32"]["Ring Holder"];
             BossAttacks.FalseKnight.summonPrefab = preloadedObjects["Crossroads_10_boss"]["Battle Scene/FK Barrel Summon"];
             BossAttacks.Gorb.slugPrefab = preloadedObjects["Cliffs_02_boss"]["Warrior/Ghost Warrior Slug"];
             BossAttacks.Grimm.grimmPrefab = preloadedObjects["Grimm_Main_Tent_boss"]["Grimm Boss"];
             BossAttacks.Grimm.spikeHolderPrefab = preloadedObjects["Grimm_Main_Tent_boss"]["Grimm Spike Holder"];
+            BossAttacks.HiveKnight.battleScenePrefab = preloadedObjects["Hive_05"]["Battle Scene"];
             BossAttacks.HollowKnight.thkPrefab = preloadedObjects["Room_Final_Boss_Core"]["Boss Control/Hollow Knight Boss"];
             BossAttacks.HornetP.hornetPrefab = preloadedObjects["Fungus1_04_boss"]["Hornet Boss 1"];
+            BossAttacks.HornetS.barbRegionPrefab = preloadedObjects["Deepnest_East_Hornet"]["Barb Region"];
+            BossAttacks.HornetS.hornetPrefab = preloadedObjects["Deepnest_East_Hornet_boss"]["Hornet Boss 2"];
             BossAttacks.MantisLords.lordPrefab = preloadedObjects["Fungus2_15_boss"]["Mantis Battle/Battle Main/Mantis Lord"];
             BossAttacks.Markoth.markothPrefab = preloadedObjects["Deepnest_East_10"]["Warrior/Ghost Warrior Markoth"];
             BossAttacks.PureVessel.focusPrefab = preloadedObjects["GG_Hollow_Knight"]["Battle Scene/Focus Blasts/HK Prime Blast"];
@@ -70,6 +77,7 @@ namespace GhostPlando {
             BossAttacks.Sheo.sheoPrefab = preloadedObjects["GG_Painter"]["Battle Scene/Sheo Boss"];
             BossAttacks.SoulMaster.mageLordPrefab = preloadedObjects["Ruins1_24_boss"]["Mage Lord"];
             BossAttacks.TraitorLord.tLordPrefab = preloadedObjects["Fungus3_23_boss"]["Battle Scene/Wave 3/Mantis Traitor Lord"];
+            BossAttacks.Uumuu.multiZapPrefab = preloadedObjects["Fungus3_archive_02"]["Mega Jellyfish Multizaps"];
             BossAttacks.Uumuu.jellyPrefab = preloadedObjects["Fungus3_archive_02_boss"]["Mega Jellyfish"];
             BossAttacks.WDefender.defenderPrefab = preloadedObjects["Dream_04_White_Defender"]["White Defender"];
         }

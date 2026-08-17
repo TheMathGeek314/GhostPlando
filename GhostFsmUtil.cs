@@ -50,14 +50,15 @@ namespace GhostPlando {
         public static FsmOwnerDefault FsmGOToOwner(this PlayMakerFSM fsm, string name) {
             return new FsmOwnerDefault {
                 GameObject = fsm.FsmVariables.GetFsmGameObject(name),
-                OwnerOption = OwnerDefaultOption.SpecifyGameObject
+                OwnerOption = OwnerDefaultOption.SpecifyGameObject,
             };
         }
 
-        public static FsmEventTarget FsmGOToEvent(this PlayMakerFSM fsm, string name) {
+        public static FsmEventTarget FsmGOToEvent(this PlayMakerFSM fsm, string name, bool sendToChildren = false) {
             return new FsmEventTarget {
                 target = FsmEventTarget.EventTarget.GameObject,
-                gameObject = fsm.FsmGOToOwner(name)
+                gameObject = fsm.FsmGOToOwner(name),
+                sendToChildren = sendToChildren
             };
         }
 

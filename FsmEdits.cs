@@ -4,6 +4,7 @@ using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
+using GhostPlando.Modules;
 
 namespace GhostPlando {
     internal static class FsmEdits {
@@ -50,11 +51,7 @@ namespace GhostPlando {
         public static FsmStateAction[] RoarInitActions(PlayMakerFSM self) {
             return [
                 new SendEventByName {
-                    eventTarget = new FsmEventTarget {
-                        target = FsmEventTarget.EventTarget.GameObject,
-                        gameObject = self.FsmGOToOwner("Nosk Title"),
-                        sendToChildren = true
-                    },
+                    eventTarget = self.FsmGOToEvent("Nosk Title", true),
                     sendEvent = "DOWN",
                     delay = 0,
                     everyFrame = false
@@ -186,6 +183,9 @@ namespace GhostPlando {
                     lessThan = FsmEvent.GetFsmEvent("WINGIFY"),
                     equal = FsmEvent.GetFsmEvent("WINGIFY"),
                     everyFrame = false
+                },
+                new CheckPhaseChange {
+                    ChangeEvent = FsmEvent.GetFsmEvent("PHASE ROOF")
                 }
             ];
         }
@@ -272,6 +272,16 @@ namespace GhostPlando {
                 }),
                 new DestroySelf()
             ];
+        }
+
+        public static FsmStateAction ZeroVelocity(PlayMakerFSM self) {
+            return new SetVelocity2d {
+                gameObject = new FsmOwnerDefault { OwnerOption = OwnerDefaultOption.UseOwner },
+                vector = Vector2.zero,
+                x = 0,
+                y = 0,
+                everyFrame = false
+            };
         }
     }
 }

@@ -28,7 +28,8 @@ namespace GhostPlando.BossAttacks {
             jarFsm.AddFsmGameObject(jarStoreName, null);
             jarFsm.AddFsmGameObject("Self", nosk.gameObject);
             jarFsm.AddFsmBool("Spawning", false);
-            jarFsm.AddFsmFloat("Jar Random", 95);
+            FsmFloat jarRandom = jarFsm.AddFsmFloat("Jar Random", 95);
+            jarFsm.AddFsmFloat("Hero Position", 0);
             jarFsm.SetState("Off");
 
             idleState.Actions = [
@@ -36,9 +37,31 @@ namespace GhostPlando.BossAttacks {
             ];
             spawnState.Actions = [
                 new RandomFloat {
-                    min = 80,
-                    max = 111,
-                    storeResult = jarFsm.FsmVariables.GetFsmFloat("Jar Random")
+                    min = -15,
+                    max = 15,
+                    storeResult = jarRandom
+                },
+                new GetPosition {
+                    gameObject = HeroController.instance.gameObject.GameObjectToOwner(),
+                    vector = Vector3.zero,
+                    x = jarFsm.FsmVariables.GetFsmFloat("Hero Position"),
+                    y = 0,
+                    z = 0,
+                    space = Space.World,
+                    everyFrame = false
+                },
+                new FloatOperator {
+                    float1 = jarRandom,
+                    float2 = jarFsm.FsmVariables.GetFsmFloat("Hero Position"),
+                    operation = FloatOperator.Operation.Add,
+                    storeResult = jarRandom,
+                    everyFrame = false
+                },
+                new FloatClamp {
+                    floatVariable = jarRandom,
+                    minValue = 77,
+                    maxValue = 114,
+                    everyFrame = false
                 },
                 new SpawnObjectFromGlobalPool {
                     gameObject = jarObject,
@@ -50,7 +73,7 @@ namespace GhostPlando.BossAttacks {
                 new SetPosition {
                     gameObject = jarFsm.FsmGOToOwner(jarStoreName),
                     vector = Vector3.zero,
-                    x = jarFsm.FsmVariables.GetFsmFloat("Jar Random"),
+                    x = jarRandom,
                     y = 17,
                     z = 0,
                     space = Space.World

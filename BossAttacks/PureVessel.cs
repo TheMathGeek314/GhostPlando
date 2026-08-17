@@ -15,7 +15,6 @@ namespace GhostPlando.BossAttacks {
         internal static Object tendrilStartAudio;
 
         public static void Hook(PlayMakerFSM nosk) {
-            GameObject pvTemp = GameObject.Instantiate(pvPrefab);
             PlayMakerFSM pvFsm = pvPrefab.LocateMyFSM("Control");
             swordObject = pvFsm.GetState("Plume Gen").GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
             swordAppearAudio = pvFsm.GetState("Plume Up").GetFirstActionOfType<AudioPlayerOneShotSingle>().audioClip.Value;
@@ -38,18 +37,16 @@ namespace GhostPlando.BossAttacks {
             }
             nosk.AddFsmGameObject("PV Focus", pvFocusParent);
 
-            GameObject tendrils = GameObject.Instantiate(pvTemp.FindChild("Tendrils"), nosk.transform.position + new Vector3(-2f, 1.6f, 0), Quaternion.identity, nosk.transform);
+            GameObject tendrils = GameObject.Instantiate(pvPrefab.FindChild("Tendrils"), nosk.transform.position + new Vector3(-2f, 1.6f, 0), Quaternion.identity, nosk.transform);
             tendrils.transform.SetScaleX(tendrils.transform.GetScaleX() * -1);
             foreach(string varName in new string[] { "T1", "T2", "T3", "ST1", "ST2", "T Hit" }) {
                 nosk.AddFsmGameObject($"Tendril {varName}", tendrils.FindChild(varName));
             }
             tendrils.SetActive(true);
             nosk.AddFsmGameObject("Tendril Parent", tendrils);
-            GameObject bss = GameObject.Instantiate(pvTemp.FindChild("Burst SmallShot"), nosk.transform.position + new Vector3(-2.05f, 0.96f, 0.001f), Quaternion.identity, nosk.transform);
+            GameObject bss = GameObject.Instantiate(pvPrefab.FindChild("Burst SmallShot"), nosk.transform.position + new Vector3(-2.05f, 0.96f, 0.001f), Quaternion.identity, nosk.transform);
             bss.transform.SetScaleX(bss.transform.GetScaleX() * -1);
             nosk.AddFsmGameObject("Tendril Burst SmallShot", bss);
-
-            GameObject.Destroy(pvTemp);
         }
 
         public static FsmStateAction[] RunSpikes(PlayMakerFSM self) {
@@ -80,11 +77,7 @@ namespace GhostPlando.BossAttacks {
         public static FsmStateAction[] RunFocus(PlayMakerFSM self) {
             return [
                 new SendEventByName {
-                    eventTarget = new FsmEventTarget {
-                        gameObject = self.FsmGOToOwner("PV Focus"),
-                        target = FsmEventTarget.EventTarget.GameObject,
-                        sendToChildren = true
-                    },
+                    eventTarget = self.FsmGOToEvent("PV Focus", true),
                     sendEvent = "BLAST",
                     delay = 0,
                     everyFrame = false
@@ -99,6 +92,14 @@ namespace GhostPlando.BossAttacks {
 
         public static FsmStateAction[] RunTendrilAntic(PlayMakerFSM self) {
             return [
+                new FaceObject {
+                    objectA = self.FsmVariables.GetFsmGameObject("Self"),
+                    objectB = HeroController.instance.gameObject,
+                    spriteFacesRight = false,
+                    playNewAnimation = false,
+                    resetFrame = false,
+                    everyFrame = false
+                },
                 new AudioPlayerOneShotSingle {
                     audioPlayer = Modules.NoskBossModule.audioPlayer,
                     spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),

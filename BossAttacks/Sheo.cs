@@ -9,9 +9,12 @@ namespace GhostPlando.BossAttacks {
     internal class Sheo {
         internal static GameObject sheoPrefab;
         internal static GameObject bluePaintObject;
+        internal static GameObject purplePaintObject;
 
         public static void Hook(PlayMakerFSM nosk) {
-            bluePaintObject = sheoPrefab.LocateMyFSM("nailmaster_sheo").GetState("S 3").GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
+            PlayMakerFSM sheoFsm = sheoPrefab.LocateMyFSM("nailmaster_sheo");
+            bluePaintObject = sheoFsm.GetState("S 3").GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
+            purplePaintObject = sheoFsm.GetState("Drops").GetFirstActionOfType<FlingObjectsFromGlobalPool>().gameObject.Value;
             nosk.AddFsmGameObject("Paint Shot", null);
             nosk.AddFsmFloat("Paint Speed", 8);
         }
@@ -57,6 +60,29 @@ namespace GhostPlando.BossAttacks {
                     multiplyBy = 1.35f,
                     everyFrame = false
                 });
+            }
+            return actions.ToArray();
+        }
+
+        public static FsmStateAction[] RunPurplePaint(PlayMakerFSM self) {
+            List<FsmStateAction> actions = new();
+            int interval = 4;//this was originally 5
+            for(int i = interval - 1; i < 30; i += interval) {
+                foreach(int ii in new int[] { -i, i }) {
+                    actions.Add(new FlingObjectsFromGlobalPool {
+                        gameObject = purplePaintObject,
+                        spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                        position = new Vector3(ii, (i % (2 * interval) == (interval - 1) ? 10 : 0), 0),
+                        spawnMin = 1,
+                        spawnMax = 1,
+                        speedMin = 0,
+                        speedMax = 0,
+                        angleMin = 270,
+                        angleMax = 270,
+                        originVariationX = 1,
+                        originVariationY = 4.5f
+                    });
+                }
             }
             return actions.ToArray();
         }

@@ -7,11 +7,13 @@ using ItemChanger.FsmStateActions;
 namespace GhostPlando.BossAttacks {
     internal class Uumuu {
         internal static GameObject jellyPrefab;
+        internal static GameObject multiZapPrefab;
         internal static GameObject zapPoolObject;
+        internal static Object multiZapAudio;
         private static string fsmName = "Zap Control";
         private static string zapStoreName = "Uumuu Zap";
 
-        public static void Hook(PlayMakerFSM nosk) {
+        public static void HookNosk(PlayMakerFSM nosk) {
             zapPoolObject = jellyPrefab.LocateMyFSM("Mega Jellyfish").GetState("Gen").GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
 
             PlayMakerFSM zapFsm = nosk.gameObject.AddComponent<PlayMakerFSM>();
@@ -55,6 +57,14 @@ namespace GhostPlando.BossAttacks {
                 }
             ];
         }
+        
+        public static void HookWosk(PlayMakerFSM wosk) {
+            GameObject multizapParent = GameObject.Instantiate(multiZapPrefab, new Vector3(94.5f, 19, 0), Quaternion.identity);
+            multizapParent.SetActive(true);
+            wosk.AddFsmGameObject("Uumuu Multizaps", multizapParent);
+            wosk.AddFsmGameObject("Uumuu Multi Current Pattern", null);
+            multiZapAudio = jellyPrefab.LocateMyFSM("Mega Jellyfish").GetState("Multizap").GetFirstActionOfType<AudioPlayerOneShotSingle>().audioClip.Value;
+        }
 
         public static FsmStateAction[] RunSlowZap(PlayMakerFSM self) {
             return [
@@ -73,6 +83,29 @@ namespace GhostPlando.BossAttacks {
         public static FsmStateAction[] StopSlowZap(PlayMakerFSM self) {
             return [
                 new Lambda(() => self.gameObject.LocateMyFSM(fsmName).FsmVariables.GetFsmBool("Running").Value = false)
+            ];
+        }
+
+        public static FsmStateAction[] RunFastZap(PlayMakerFSM self) {
+            return [
+                new GetRandomChild {
+                    gameObject = self.FsmGOToOwner("Uumuu Multizaps"),
+                    storeResult = self.FsmVariables.GetFsmGameObject("Uumuu Multi Current Pattern")
+                },
+                new AudioPlayerOneShotSingle {
+                    audioPlayer = Modules.NoskBossModule.audioPlayer,
+                    spawnPoint = HeroController.instance.gameObject,
+                    audioClip = multiZapAudio,
+                    pitchMin = 1,
+                    pitchMax = 1,
+                    volume = 1.5f,
+                    delay = 0,
+                    storePlayer = self.FsmVariables.GetFsmGameObject("Empty Store")
+                },
+                new ActivateAllChildren {
+                    gameObject = self.FsmVariables.GetFsmGameObject("Uumuu Multi Current Pattern"),
+                    activate = true
+                }
             ];
         }
     }
