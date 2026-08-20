@@ -37,6 +37,7 @@ namespace GhostPlando {
                 ("Grimm_Main_Tent_boss", "Grimm Spike Holder"),
                 ("Grimm_Nightmare", "Grimm Control/Appear Scene/Title"),
                 ("Grimm_Nightmare", "Grimm Control/Appear Scene/black_fader"),
+                ("Grimm_Nightmare", "Grimm Control/Nightmare Grimm Boss"),
                 ("Hive_05", "Battle Scene"),
                 ("Mines_18", "Laser Turret Mega (1)"),
                 ("Mines_32", "Battle Scene/Zombie Beam Miner Rematch"),
@@ -72,6 +73,7 @@ namespace GhostPlando {
             BossAttacks.HornetS.hornetPrefab = preloadedObjects["Deepnest_East_Hornet_boss"]["Hornet Boss 2"];
             BossAttacks.MantisLords.lordPrefab = preloadedObjects["Fungus2_15_boss"]["Mantis Battle/Battle Main/Mantis Lord"];
             BossAttacks.Markoth.markothPrefab = preloadedObjects["Deepnest_East_10"]["Warrior/Ghost Warrior Markoth"];
+            BossAttacks.NightmareKing.nkgPrefab = preloadedObjects["Grimm_Nightmare"]["Grimm Control/Nightmare Grimm Boss"];
             BossAttacks.PureVessel.focusPrefab = preloadedObjects["GG_Hollow_Knight"]["Battle Scene/Focus Blasts/HK Prime Blast"];
             BossAttacks.PureVessel.pvPrefab = preloadedObjects["GG_Hollow_Knight"]["Battle Scene/HK Prime"];
             BossAttacks.Sheo.sheoPrefab = preloadedObjects["GG_Painter"]["Battle Scene/Sheo Boss"];

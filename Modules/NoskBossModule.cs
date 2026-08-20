@@ -11,6 +11,8 @@ using ItemChanger.Modules;
 namespace GhostPlando.Modules {
     internal class NoskBossModule: Module {
         public bool EncounteredWingedNosk;
+        private bool FirstEncounter = true;
+        private int strengthMultiplier => PlayerData.instance.GetBool(nameof(PlayerData.equippedCharm_25)) ? 6 : 5;
 
         internal static GameObject titlePrefab;
         internal static GameObject titleFaderPrefab;
@@ -81,21 +83,21 @@ namespace GhostPlando.Modules {
             trans1.GetFirstActionOfType<ApplyMusicCue>().Enabled = false;
             self.GetState("Roar Init").AddFirstActions(FsmEdits.RoarInitActions(self));
 
-            int hp = (phaseHpHits[5] + phaseHpHits[4]) * 5;
+            int hp = (phaseHpHits[5] + phaseHpHits[4]) * strengthMultiplier;
             self.AddFsmInt("Phase 4-5 HP", hp);
-            hp += phaseHpHits[3] * 5;
+            hp += phaseHpHits[3] * strengthMultiplier;
             self.AddFsmInt("Phase 3-4 HP", hp);
-            hp += phaseHpHits[2] * 5;
+            hp += phaseHpHits[2] * strengthMultiplier;
             self.AddFsmInt("Phase 2-3 HP", hp);
-            hp += phaseHpHits[1] * 5;
+            hp += phaseHpHits[1] * strengthMultiplier;
             self.AddFsmInt("Phase 1-2 HP", hp);
-            hp += phaseHpHits[0] * 5;
+            hp += phaseHpHits[0] * strengthMultiplier;
             self.gameObject.GetComponent<HealthManager>().hp = hp;
-            CheckPhaseChange.SetupThresholds(phaseHpHits);
+            CheckPhaseChange.SetupThresholds(phaseHpHits, strengthMultiplier);
             self.AddFsmInt("Current Boss Phase", 1);
 
-            //if(EncounteredWingedNosk)
-            //    self.gameObject.GetComponent<HealthManager>().hp = self.FsmVariables.GetFsmInt("Phase 4-5 HP").Value;
+            if(EncounteredWingedNosk)
+                self.gameObject.GetComponent<HealthManager>().hp = self.FsmVariables.GetFsmInt("Phase 4-5 HP").Value;
 
             audioPlayer = self.GetState("Trans 1").GetFirstActionOfType<AudioPlayerOneShotSingle>().audioPlayer.Value;
 
@@ -117,7 +119,7 @@ namespace GhostPlando.Modules {
             BossAttacks.PureVessel.Hook(self);
             BossAttacks.CGuardian.Hook(self);
             BossAttacks.HollowKnight.Hook(self);
-            BossAttacks.TraitorLord.Hook(self);
+            BossAttacks.TraitorLord.HookNosk(self);
 
             //force first attack after phase threshold
             self.GetState("Idle").AddTransition("PHASE ROOF", "RS Jump Antic");
@@ -127,6 +129,14 @@ namespace GhostPlando.Modules {
             self.GetState("Roof Jump?").GetFirstActionOfType<IntCompare>().integer2 = self.FsmVariables.GetFsmInt("Phase 1-2 HP");
             self.GetState("Rising").GetFirstActionOfType<GetVelocity2d>().Enabled = true;
             self.GetState("Idle").AddFirstActions(FsmEdits.IdleActions(self));
+
+            //speed up returning intro
+            if(!FirstEncounter) {
+                for(int i = 1; i < 5; i++) {
+                    self.GetState($"Trans {i}").GetFirstActionOfType<Wait>().time = 1f;
+                }
+            }
+            roarEnd.AddFirstAction(new Lambda(() => FirstEncounter = false));
 
             //nonspecific supplemental edits
             GameObject zeroOrigin = new();
@@ -365,9 +375,11 @@ namespace GhostPlando.Modules {
             BossAttacks.HornetS.Hook(self);
             BossAttacks.HiveKnight.Hook(self);
             BossAttacks.Uumuu.HookWosk(self);
+            BossAttacks.NightmareKing.Hook(self);
+            BossAttacks.TraitorLord.HookWosk(self);
 
             self.AddFsmGameObject("Empty Store", null);
-            self.AddFsmInt("Phase 5-6 HP", phaseHpHits[5] * 5);
+            self.AddFsmInt("Phase 5-6 HP", phaseHpHits[5] * strengthMultiplier);
             self.AddFsmInt("Current Boss Phase", 5);
 
             //generic/boundary edits
@@ -395,16 +407,23 @@ namespace GhostPlando.Modules {
             self.GetState("Roof Return").GetFirstActionOfType<SetPosition>().y.Value = 24f;
             FsmState chooseAttackState = self.GetState("Choose Attack");
             chooseAttackState.AddTransition("ROOF", "Roof Antic");
-            chooseAttackState.GetFirstActionOfType<IntCompare>().integer2 = self.FsmVariables.GetFsmInt("Phase 5-6 HP");
+            chooseAttackState.GetFirstActionOfType<IntCompare>().integer2 = fv.GetFsmInt("Phase 5-6 HP");
             SendRandomEventV3 randomEvent = chooseAttackState.GetFirstActionOfType<SendRandomEventV3>();
             randomEvent.events = new List<string> { "SWOOP", "ACID ROAR", "SUMMON", "ROOF" }.Select(s => FsmEvent.GetFsmEvent(s)).ToArray();
             randomEvent.weights = [1, 1, 1, 1];
-            randomEvent.trackingInts = new List<string> { "Ct Swoop", "Ct Acid", "Ct Summon", "Ct Roof" }.Select(s => self.FsmVariables.GetFsmInt(s)).ToArray();
+            randomEvent.trackingInts = new List<string> { "Ct Swoop", "Ct Acid", "Ct Summon", "Ct Roof" }.Select(s => fv.GetFsmInt(s)).ToArray();
             randomEvent.eventMax = [2, 1, 1, 1];
-            randomEvent.trackingIntsMissed = new List<string> { "Ms Swoop", "Ms Acid", "Ms Summon", "Ms Roof" }.Select(s => self.FsmVariables.GetFsmInt(s)).ToArray();
+            randomEvent.trackingIntsMissed = new List<string> { "Ms Swoop", "Ms Acid", "Ms Summon", "Ms Roof" }.Select(s => fv.GetFsmInt(s)).ToArray();
             randomEvent.missedMax = [3, 4, 4, 4];
             self.GetState("Summon Recover").GetFirstActionOfType<AudioPlayerOneShotSingle>().Enabled = false;
 
+            //Phase 5-6 updates
+            FsmState toChoose2State = self.AddState("To Choose 2");
+            chooseAttackState.RemoveTransitionsOn("HALF");
+            chooseAttackState.AddTransition("HALF", toChoose2State);
+            toChoose2State.AddTransition("FINISHED", "Choose Attack 2");
+            toChoose2State.Actions = FsmEdits.UpdateSpinners(self);
+            self.GetState("Choose Attack 2").AddFirstAction(new CheckPhaseChange { ChangeEvent = FsmEvent.GetFsmEvent("ROOF") });
 
             //entrance and intermediate phase
             FsmState initVelState = self.GetState("Init Velocity");
@@ -428,9 +447,59 @@ namespace GhostPlando.Modules {
             thkPrepState.Actions = BossAttacks.HollowKnight.PrepSpray(self, this);
             thkSprayState.Actions = BossAttacks.HollowKnight.RunSpray(self);
             smSpinnerState.Actions = BossAttacks.SoulMaster.RunSpinner(self);
-            self.GetState("Choose Attack 2").AddFirstActions(BossAttacks.SoulMaster.StopSpinner(self));
 
-            //don't forget CheckPhaseChange for forced roof
+            //swoop attacks
+            FsmState swoopAnticState = self.GetState("Swoop Antic");
+            FsmState swoopStartState = self.AddState("Swoop Start");
+            swoopAnticState.RemoveTransitionsTo("Swoop Direction");
+            swoopAnticState.AddTransition("FINISHED", swoopStartState);
+            swoopStartState.AddTransition("FINISHED", "Swoop Direction");
+            swoopStartState.Actions = FsmEdits.SwoopStartActions(self);
+
+            FsmState swoopFireChoiceL = self.AddState("Swoop L Fire?");
+            FsmState swoopFireChoiceR = self.AddState("Swoop R Fire?");
+            FsmState swoopFireL = self.AddState("Swoop Fire L");
+            FsmState swoopFireR = self.AddState("Swoop Fire R");
+            FsmState swoopDirectionState = self.GetState("Swoop Direction");
+            swoopDirectionState.RemoveTransitionsOn("LEFT");
+            swoopDirectionState.RemoveTransitionsOn("RIGHT");
+            swoopDirectionState.AddTransition("LEFT", swoopFireChoiceL);
+            swoopDirectionState.AddTransition("RIGHT", swoopFireChoiceR);
+            swoopFireChoiceL.AddTransition("WITH", swoopFireL);
+            swoopFireChoiceL.AddTransition("WITHOUT", "Swoop L");
+            swoopFireChoiceR.AddTransition("WITH", swoopFireR);
+            swoopFireChoiceR.AddTransition("WITHOUT", "Swoop R");
+            swoopFireL.AddTransition("FINISHED", "Swoop Rise");
+            swoopFireR.AddTransition("FINISHED", "Swoop Rise");
+            swoopFireChoiceL.Actions = FsmEdits.DoFireSwoop(self);
+            swoopFireChoiceR.Actions = FsmEdits.DoFireSwoop(self);
+            swoopFireL.Actions = [.. BossAttacks.NightmareKing.RunFlameTrail(self), .. self.GetState("Swoop L").Actions];
+            swoopFireR.Actions = [.. BossAttacks.NightmareKing.RunFlameTrail(self), .. self.GetState("Swoop R").Actions];
+            self.GetState("Swoop Rise").AddFirstActions(BossAttacks.HiveKnight.EndGlobarbs(self));
+
+            //spit attacks
+            FsmState acidRoarAnticState = self.GetState("Acid Roar Antic");
+            FsmState spitChooseState = self.AddState("Acid Roar Choice");
+            FsmState spitZapState = self.AddState("Acid Roar Zap");
+            FsmState sickleOrbStartState = self.AddState("Sickle Orb Start");
+            FsmState sickleOrbFireState = self.AddState("Sickle Orb Fire");
+            FsmState sickleOrbLoopState = self.AddState("Sickle Orb Loop");
+            acidRoarAnticState.RemoveTransitionsTo("Spit 1");
+            acidRoarAnticState.AddTransition("FINISHED", spitChooseState);
+            spitChooseState.AddTransition("FIVE", spitZapState);
+            spitChooseState.AddTransition("SIX", sickleOrbStartState);
+            spitZapState.AddTransition("FINISHED", "Spit 1");
+            sickleOrbStartState.AddTransition("FINISHED", sickleOrbFireState);
+            sickleOrbFireState.AddTransition("LOOP", sickleOrbLoopState);
+            sickleOrbFireState.AddTransition("FINISHED", "Acid Roar End");
+            sickleOrbLoopState.AddTransition("FINISHED", sickleOrbFireState);
+
+            spitChooseState.Actions = [FsmEdits.PhaseDecisionActions2(self)];
+            spitZapState.Actions = [.. BossAttacks.Uumuu.RunFastZap(self), new Wait { time = 0.3f, finishEvent = FsmEvent.Finished, realTime = false }];
+            sickleOrbStartState.Actions = [.. BossAttacks.TraitorLord.RunSickles(self), .. BossAttacks.SoulMaster.PrepOrb(self)];
+            sickleOrbFireState.Actions = BossAttacks.SoulMaster.FireOrb(self);
+            sickleOrbLoopState.Actions = BossAttacks.SoulMaster.LoopOrb(self);
+
 
 
 
@@ -447,30 +516,26 @@ namespace GhostPlando.Modules {
             //testing markoth nails (depends on CG Ray Vector)
             self.GetState("CG Laser Prep").AddLastActions(BossAttacks.Markoth.RunNails(self));
 
-            //testing sheo purple paint
-            self.GetState("Globs").Actions = [];
-            self.GetState("Globs").AddFirstActions(BossAttacks.Sheo.RunPurplePaint(self));
-
-            //testing hive knight globs (depends on HornetS barbs)
-            self.GetState("Swoop Direction").AddFirstActions(BossAttacks.HiveKnight.RunGlobarbs(self));
-            self.GetState("Swoop Rise").AddFirstActions(BossAttacks.HiveKnight.EndGlobarbs(self));
-
-            //testing hive knight bee rain
-            self.GetState("Globs").AddLastActions(BossAttacks.HiveKnight.RunSwarm(self));
-
-            //testing uumuu fast electricity
-            self.GetState("Acid Roar Antic").AddFirstActions(BossAttacks.Uumuu.RunFastZap(self));
+            //testing purple paint and bee rain
+            FsmState globsState = self.GetState("Globs");
+            FsmState globs2State = self.AddState("Globs 2");
+            globsState.RemoveTransitionsOn("FINISHED");
+            globsState.AddTransition("FINISHED", globs2State);//option to split on phase 6?
+            globs2State.AddTransition("FINISHED", "Roof Return");
+            globsState.Actions = [.. BossAttacks.Sheo.RunPurplePaint(self), .. BossAttacks.HiveKnight.RunSwarm(self)];
+            globs2State.Actions = BossAttacks.Sheo.RunPurplePaint2(self);
         }
     }
 
     public class CheckPhaseChange: FsmStateAction {
-        private static List<int> hpPhases = new();
+        private static List<int> hpPhases;
         public FsmEvent ChangeEvent;
 
-        public static void SetupThresholds(int[] hpHits) {
+        public static void SetupThresholds(int[] hpHits, int multiplier) {
             int hp = 0;
+            hpPhases = [0];
             for(int i = hpHits.Length - 1; i >= 0; i--) {
-                hp += 5 * hpHits[i];
+                hp += multiplier * hpHits[i];
                 hpPhases.Insert(0, hp);
             }
         }
@@ -479,10 +544,8 @@ namespace GhostPlando.Modules {
             FsmVariables fv = Fsm.FsmComponent.FsmVariables;
             int hp = fv.GetFsmInt("HP").Value;
             FsmInt phase = fv.GetFsmInt("Current Boss Phase");
-            Modding.Logger.Log($"[GhostPlando] - comparing hp={hp} to threshold[{phase.Value}]={hpPhases[phase.Value]}");
             if(hp <= hpPhases[phase.Value]) {
                 phase.Value++;
-                Modding.Logger.Log($"[GhostPlando] - updated phase.Value to {phase.Value}, calling {ChangeEvent.Name}");
                 base.Fsm.Event(ChangeEvent);
             }
             Finish();

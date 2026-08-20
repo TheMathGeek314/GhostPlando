@@ -15,6 +15,9 @@ namespace GhostPlando.BossAttacks {
             projectileAudio = attackState.GetFirstActionOfType<AudioPlayerOneShotSingle>().audioClip.Value;
             spearObject = attackState.GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
             nosk.AddFsmGameObject("Gorb Shot", null);
+            for(int i = 0; i < 8; i++)
+                spearObject.Spawn();
+            spearObject.RecycleAll();
         }
 
         public static FsmStateAction[] RunSpears(PlayMakerFSM self) {

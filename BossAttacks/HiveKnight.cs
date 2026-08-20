@@ -25,6 +25,8 @@ namespace GhostPlando.BossAttacks {
             FsmState barbState = globFsm.AddState("Chose Barb");
             FsmState glob2State = globFsm.AddState("Chose Glob 2");
             FsmState barb2State = globFsm.AddState("Chose Barb 2");
+            FsmState globEndState = globFsm.AddState("Glob End Early");
+            FsmState barbEndState = globFsm.AddState("Barb End Early");
             startState.AddTransition("START", decisionState);
             decisionState.AddTransition("GLOB", globState);
             decisionState.AddTransition("BARB", barbState);
@@ -32,10 +34,12 @@ namespace GhostPlando.BossAttacks {
             barbState.AddTransition("FINISHED", barb2State);
             glob2State.AddTransition("FINISHED", globState);
             barb2State.AddTransition("FINISHED", barbState);
-            globState.AddTransition("END", startState);
+            globState.AddTransition("END", globEndState);
             glob2State.AddTransition("END", startState);
-            barbState.AddTransition("END", startState);
+            globEndState.AddTransition("FINISHED", startState);
+            barbState.AddTransition("END", barbEndState);
             barb2State.AddTransition("END", startState);
+            barbEndState.AddTransition("FINISHED", startState);
 
             FsmFloat wx = globFsm.AddFsmFloat("wx", 0);
             FsmFloat wy = globFsm.AddFsmFloat("wy", 0);
@@ -72,11 +76,13 @@ namespace GhostPlando.BossAttacks {
                     everyFrame = false
                 },
                 new Lambda(() => {
-                    GameObject glob = GameObject.Instantiate(globPrefab, new Vector3(wx.Value, wy.Value + 2, 0), Quaternion.identity, null);
+                    GameObject glob = GameObject.Instantiate(globPrefab, new Vector3(wx.Value, wy.Value, 0), Quaternion.identity, null);
                     PlayMakerFSM gf = glob.GetComponent<PlayMakerFSM>();
-                    gf.GetState("Set Inert").GetFirstActionOfType<SetParent>().Enabled = false;
+                    FsmState setInertState = gf.GetState("Set Inert");
+                    setInertState.GetFirstActionOfType<SetParent>().Enabled = false;
+                    setInertState.GetFirstActionOfType<SetPosition>().y = 0;
                     gf.GetState("End").AddLastAction(new DestroySelf());
-                    gf.GetState("Tween Up").GetFirstActionOfType<Translate>().y = Random.Range(-3f, 3f);
+                    gf.GetState("Tween Up").GetFirstActionOfType<Translate>().y = Random.Range(0f, 4.5f);
                     glob.SetActive(true);
                     globarbInstance.Value = glob;
                 }),
@@ -97,8 +103,17 @@ namespace GhostPlando.BossAttacks {
                     realTime = false
                 }
             ];
+            globEndState.Actions = [
+                new SendEventByName {
+                    eventTarget = globFsm.FsmGOToEvent("Globarb Instance"),
+                    sendEvent = "FIRE",
+                    delay = 0,
+                    everyFrame = false
+                }
+            ];
             barbState.Actions = BossAttacks.HornetS.SpawnBarb(globFsm);
             barb2State.Actions = BossAttacks.HornetS.TriggerBarb(globFsm);
+            barbEndState.Actions = BossAttacks.HornetS.TriggerBarbEarly(globFsm);
         }
 
         public static FsmStateAction[] RunGlobarbs(PlayMakerFSM self) {
@@ -147,7 +162,7 @@ namespace GhostPlando.BossAttacks {
                     everyFrame = false
                 },
                 new Wait {
-                    time = 4,//split into 1.5 + 2.5?
+                    time = 1.5f,
                     finishEvent = FsmEvent.Finished,
                     realTime = false
                 }

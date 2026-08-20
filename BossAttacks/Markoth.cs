@@ -8,13 +8,17 @@ namespace GhostPlando.BossAttacks {
     internal class Markoth {
         internal static GameObject markothPrefab;
         internal static GameObject nailObject;
+        internal static GameObject shieldObject;
 
         public static void Hook(PlayMakerFSM wosk) {
             nailObject = markothPrefab.LocateMyFSM("Attacking").GetState("Nail").GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
+            shieldObject = markothPrefab.LocateMyFSM("Shield Attack").GetState("Init").GetFirstActionOfType<CreateObject>().gameObject.Value;
             wosk.AddFsmVector3("Markoth Vector", Vector3.zero);
             wosk.AddFsmGameObject("Markoth Shot", null);
+            wosk.AddFsmGameObject("Markoth Shield", null);
             for(int i = 0; i < 3; i++)
-                nailObject.Spawn().Recycle();
+                nailObject.Spawn();
+            nailObject.RecycleAll();
         }
 
         public static FsmStateAction[] RunNails(PlayMakerFSM self) {
@@ -45,6 +49,27 @@ namespace GhostPlando.BossAttacks {
                     storeObject = fv.GetFsmGameObject("Markoth Shot")
                 },
                 new EditShotFsm()
+            ];
+        }
+
+        public static FsmStateAction[] RunShields(PlayMakerFSM self) {
+            return [
+                new CreateObject {
+                    gameObject = shieldObject,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                    position = Vector3.zero,
+                    rotation = Vector3.zero,
+                    storeObject = self.FsmVariables.GetFsmGameObject("Markoth Shield")
+                },
+                new SetParent {
+                    gameObject = self.FsmGOToOwner("Markoth Shield"),
+                    parent = self.FsmVariables.GetFsmGameObject("Self"),
+                    resetLocalPosition = false,
+                    resetLocalRotation = false
+                },
+                new Lambda(() => {
+                    self.FsmVariables.GetFsmGameObject("Markoth Shield").Value.LocateMyFSM("Summon Shield").GetState("Idle").AddTransition("FINISHED", "Summon");
+                })
             ];
         }
     }

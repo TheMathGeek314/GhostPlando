@@ -4,7 +4,6 @@ using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
-using GhostPlando.Modules;
 
 namespace GhostPlando {
     internal static class FsmEdits {
@@ -101,6 +100,17 @@ namespace GhostPlando {
             ];
         }
 
+        public static FsmStateAction PhaseDecisionActions2(PlayMakerFSM self) {
+            return new IntCompare {
+                integer1 = self.FsmVariables.GetFsmInt("HP"),
+                integer2 = self.FsmVariables.GetFsmInt("Phase 5-6 HP"),
+                greaterThan = FsmEvent.GetFsmEvent("FIVE"),
+                equal = FsmEvent.GetFsmEvent("SIX"),
+                lessThan = FsmEvent.GetFsmEvent("SIX"),
+                everyFrame = false
+            };
+        }
+
         public static FsmStateAction[] HoveringActions(PlayMakerFSM self) {
             List<FsmStateAction> actions = [
                 new IntCompare {
@@ -184,7 +194,7 @@ namespace GhostPlando {
                     equal = FsmEvent.GetFsmEvent("WINGIFY"),
                     everyFrame = false
                 },
-                new CheckPhaseChange {
+                new Modules.CheckPhaseChange {
                     ChangeEvent = FsmEvent.GetFsmEvent("PHASE ROOF")
                 }
             ];
@@ -282,6 +292,52 @@ namespace GhostPlando {
                 y = 0,
                 everyFrame = false
             };
+        }
+
+        public static FsmStateAction[] UpdateSpinners(PlayMakerFSM self) {
+            FsmVariables fv = self.FsmVariables;
+            return [
+                ..BossAttacks.SoulMaster.StopSpinner(self),
+                new IntCompare {
+                    integer1 = fv.GetFsmInt("HP"),
+                    integer2 = fv.GetFsmInt("Phase 5-6 HP"),
+                    greaterThan = FsmEvent.Finished,
+                    everyFrame = false
+                },
+                new IntCompare {
+                    integer1 = fv.GetFsmInt("Current Boss Phase"),
+                    integer2 = 6,
+                    equal = FsmEvent.Finished,
+                    everyFrame = false
+                },
+                .. BossAttacks.Markoth.RunShields(self)
+            ];
+        }
+
+        public static FsmStateAction[] SwoopStartActions(PlayMakerFSM self) {
+           return [
+                new IntCompare {
+                    integer1 = self.FsmVariables.GetFsmInt("HP"),
+                    integer2 = self.FsmVariables.GetFsmInt("Phase 5-6 HP"),
+                    lessThan = FsmEvent.Finished,
+                    equal = FsmEvent.Finished,
+                    everyFrame = false
+                },
+               .. BossAttacks.HiveKnight.RunGlobarbs(self)
+            ];
+        }
+
+        public static FsmStateAction[] DoFireSwoop(PlayMakerFSM self) {
+            return [
+                new IntCompare {
+                    integer1 = self.FsmVariables.GetFsmInt("HP"),
+                    integer2 = self.FsmVariables.GetFsmInt("Phase 5-6 HP"),
+                    lessThan = FsmEvent.GetFsmEvent("WITH"),
+                    equal = FsmEvent.GetFsmEvent("WITH"),
+                    greaterThan = FsmEvent.GetFsmEvent("WITHOUT"),
+                    everyFrame = false
+                }
+            ];
         }
     }
 }

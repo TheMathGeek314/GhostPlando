@@ -66,7 +66,7 @@ namespace GhostPlando.BossAttacks {
 
         public static FsmStateAction[] RunPurplePaint(PlayMakerFSM self) {
             List<FsmStateAction> actions = new();
-            int interval = 4;//this was originally 5
+            int interval = 4;
             for(int i = interval - 1; i < 30; i += interval) {
                 foreach(int ii in new int[] { -i, i }) {
                     actions.Add(new FlingObjectsFromGlobalPool {
@@ -84,6 +84,34 @@ namespace GhostPlando.BossAttacks {
                     });
                 }
             }
+            return actions.ToArray();
+        }
+
+        public static FsmStateAction[] RunPurplePaint2(PlayMakerFSM self) {
+            List<FsmStateAction> actions = new();
+            int interval = 5;
+            for(int i = interval - 1; i < 30; i += interval) {
+                foreach(int ii in new int[] { -i, i }) {
+                    actions.Add(new FlingObjectsFromGlobalPool {
+                        gameObject = purplePaintObject,
+                        spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                        position = new Vector3(ii, (i % (2 * interval) == (interval - 1) ? 10 : 0), 0),
+                        spawnMin = 1,
+                        spawnMax = 1,
+                        speedMin = 0,
+                        speedMax = 0,
+                        angleMin = 270,
+                        angleMax = 270,
+                        originVariationX = 1,
+                        originVariationY = 4.5f
+                    });
+                }
+            }
+            actions.Add(new Wait {
+                time = 2.5f,
+                finishEvent = FsmEvent.Finished,
+                realTime = false
+            });
             return actions.ToArray();
         }
     }

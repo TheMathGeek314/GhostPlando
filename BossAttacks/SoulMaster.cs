@@ -8,8 +8,10 @@ namespace GhostPlando.BossAttacks {
     internal class SoulMaster {
         internal static GameObject mageLordPrefab;
         internal static GameObject shockwavePoolObject;
+        internal static GameObject orbObject;
         internal static Object quakeAudio;
         internal static Object chargeAudio;
+        internal static Object shootAudio;
         internal const string hitName = "Soul Master Hit";
         internal const string blastName = "Soul Master Blast";
         internal const string pillarName = "Soul Master Pillar";
@@ -37,6 +39,15 @@ namespace GhostPlando.BossAttacks {
             chargeAudio = mageLordFsm.GetState("HS Summon").GetFirstActionOfType<AudioPlaySimple>().oneShotClip.Value;
             On.PlayMakerFSM.OnEnable += ReduceSpinnerRange;
             wosk.AddFsmGameObject("Soul Master Spinner", GameObject.Instantiate(mageLordPrefab.FindChild("Orb Spinner"), wosk.transform));
+            FsmState shotState = mageLordFsm.GetState("Shot");
+            orbObject = shotState.GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
+            shootAudio = shotState.GetFirstActionOfType<AudioPlaySimple>().oneShotClip.Value;
+            wosk.AddFsmFloat("SM Orb X", 0);
+            wosk.AddFsmFloat("SM Orb Y", 0);
+            wosk.AddFsmVector3("SM Orb Vector", Vector3.zero);
+            wosk.AddFsmGameObject("SM Orb Projectile", null);
+            wosk.AddFsmFloat("SM Orb Angle", 0);
+            wosk.AddFsmFloat("SM Orb Looper", 0);
         }
 
         public static FsmStateAction[] RunQuake(PlayMakerFSM self) {
@@ -146,6 +157,127 @@ namespace GhostPlando.BossAttacks {
                     tween.vector.Value *= 0.7f;
                 }
             }
+        }
+
+        public static FsmStateAction[] PrepOrb(PlayMakerFSM self) {
+            return [
+                new AudioPlayerOneShotSingle {
+                    audioPlayer = Modules.NoskBossModule.audioPlayer,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                    audioClip = chargeAudio,
+                    pitchMin = 1,
+                    pitchMax = 1,
+                    volume = 1,
+                    delay = 0,
+                    storePlayer = self.FsmVariables.GetFsmGameObject("Empty Store")
+                },
+                new SetFloatValue {
+                    floatVariable = self.FsmVariables.GetFsmFloat("SM Orb Looper"),
+                    floatValue = 0,
+                    everyFrame = false
+                },
+                new Wait {
+                    time = 0.7f,
+                    finishEvent = FsmEvent.Finished,
+                    realTime = false
+                }
+            ];
+        }
+
+        public static FsmStateAction[] FireOrb(PlayMakerFSM self) {
+            FsmVariables fv = self.FsmVariables;
+            return [
+                new AudioPlayerOneShotSingle {
+                    audioPlayer = Modules.NoskBossModule.audioPlayer,
+                    spawnPoint = fv.GetFsmGameObject("Self"),
+                    audioClip = shootAudio,
+                    pitchMin = 1,
+                    pitchMax = 1,
+                    volume = 1,
+                    delay = 0,
+                    storePlayer = fv.GetFsmGameObject("Empty Store")
+                },
+                new RandomFloat {
+                    min = -3,
+                    max = 3,
+                    storeResult = fv.GetFsmFloat("SM Orb X")
+                },
+                new RandomFloat {
+                    min = -3,
+                    max = 3,
+                    storeResult = fv.GetFsmFloat("SM Orb Y")
+                },
+                new SetVector3XYZ {
+                    vector3Variable = fv.GetFsmVector3("SM Orb Vector"),
+                    vector3Value = Vector3.zero,
+                    x = fv.GetFsmFloat("SM Orb X"),
+                    y = fv.GetFsmFloat("SM Orb Y"),
+                    z = 0,
+                    everyFrame = false
+                },
+                new SpawnObjectFromGlobalPool {
+                    gameObject = orbObject,
+                    spawnPoint = fv.GetFsmGameObject("Self"),
+                    position = fv.GetFsmVector3("SM Orb Vector"),
+                    rotation = Vector3.zero,
+                    storeObject = fv.GetFsmGameObject("SM Orb Projectile")
+                },
+                new SetIsKinematic2d {
+                    gameObject = self.FsmGOToOwner("SM Orb Projectile"),
+                    isKinematic = false
+                },
+                new SendEventByName {
+                    eventTarget = self.FsmGOToEvent("SM Orb Projectile"),
+                    sendEvent = "FIRE",
+                    delay = 0,
+                    everyFrame = false
+                },
+                new GetAngleToTarget2D {
+                    gameObject = self.FsmGOToOwner("SM Orb Projectile"),
+                    target = fv.GetFsmGameObject("Hero"),
+                    offsetX = 0,
+                    offsetY = -0.5f,
+                    storeAngle = fv.GetFsmFloat("SM Orb Angle"),
+                    everyFrame = false
+                },
+                new SetVelocityAsAngle {
+                    gameObject = self.FsmGOToOwner("SM Orb Projectile"),
+                    angle = fv.GetFsmFloat("SM Orb Angle"),
+                    speed = 20,
+                    everyFrame = false
+                },
+                new SendRandomEvent {
+                    events = [ FsmEvent.GetFsmEvent("LOOP"), FsmEvent.Finished ],
+                    weights = [ 9, fv.GetFsmFloat("SM Orb Looper") ],
+                    delay = 0
+                }
+            ];
+        }
+
+        public static FsmStateAction[] LoopOrb(PlayMakerFSM self) {
+            return [
+                new FloatAdd {
+                    floatVariable = self.FsmVariables.GetFsmFloat("SM Orb Looper"),
+                    add = 1,
+                    perSecond = false,
+                    everyFrame = false
+                },
+                new AudioPlayerOneShotSingle {
+                    audioPlayer = Modules.NoskBossModule.audioPlayer,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
+                    audioClip = chargeAudio,
+                    pitchMin = 1,
+                    pitchMax = 1,
+                    volume = 1,
+                    delay = 0,
+                    storePlayer = self.FsmVariables.GetFsmGameObject("Empty Store")
+                },
+                new Wait {
+                    time = 0.6f,
+                    finishEvent = FsmEvent.Finished,
+                    realTime = false
+                }
+            ];
         }
     }
 }

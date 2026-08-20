@@ -66,5 +66,26 @@ namespace GhostPlando.BossAttacks {
                 }
             ];
         }
+
+        public static FsmStateAction[] TriggerBarbEarly(PlayMakerFSM self) {
+            return [
+                new SendEventByName {
+                    eventTarget = self.FsmGOToEvent("Globarb Instance"),
+                    sendEvent = "BARB READY",
+                    delay = 0,
+                    everyFrame = false
+                },
+                new AudioPlayerOneShotSingle {
+                    audioPlayer = Modules.NoskBossModule.audioPlayer,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Wosk"),
+                    audioClip = barbAudio,
+                    pitchMin = 1,
+                    pitchMax = 1,
+                    volume = 1,
+                    delay = 0,
+                    storePlayer = self.FsmVariables.GetFsmGameObject("Empty Store")
+                }
+            ];
+        }
     }
 }
