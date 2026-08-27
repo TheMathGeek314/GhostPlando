@@ -3,7 +3,6 @@ using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
-using GhostPlando.Modules;
 
 namespace GhostPlando.BossAttacks {
     internal class HollowKnight {
@@ -106,7 +105,7 @@ namespace GhostPlando.BossAttacks {
         public static FsmStateAction[] TriggerPillars(PlayMakerFSM self) {
             return [
                 new AudioPlayerOneShotSingle {
-                    audioPlayer = NoskBossModule.audioPlayer,
+                    audioPlayer = Modules.NoskBossModule.audioPlayer,
                     spawnPoint = HeroController.instance.gameObject,
                     audioClip = pillarAudio,
                     pitchMin = 1,
@@ -124,7 +123,7 @@ namespace GhostPlando.BossAttacks {
             ];
         }
 
-        public static FsmStateAction[] PrepSpray(PlayMakerFSM self, NoskBossModule module) {
+        public static FsmStateAction[] PrepSpray(PlayMakerFSM self, Modules.NoskBossModule module) {
             return [
                 new Lambda(() => {
                     module.EncounteredWingedNosk = true;
@@ -140,7 +139,7 @@ namespace GhostPlando.BossAttacks {
                     everyFrame = false
                 },
                 new AudioPlayerOneShotSingle {
-                    audioPlayer = NoskBossModule.audioPlayer,
+                    audioPlayer = Modules.NoskBossModule.audioPlayer,
                     spawnPoint = self.FsmVariables.GetFsmGameObject("Self"),
                     audioClip = sprayAudio,
                     pitchMin = 1,

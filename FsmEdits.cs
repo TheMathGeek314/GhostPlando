@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
@@ -67,7 +68,7 @@ namespace GhostPlando {
                     finishEvent = FsmEvent.Finished,
                     realTime = false,
                     stopOnExit = true,
-                    loopDontFinish = false
+                    loopDontFinish = true
                 },
                 new Lambda(() => {
                     GameCameras.instance.hudCanvas.LocateMyFSM("Slide Out").SendEvent("IN");
@@ -194,7 +195,7 @@ namespace GhostPlando {
                     equal = FsmEvent.GetFsmEvent("WINGIFY"),
                     everyFrame = false
                 },
-                new Modules.CheckPhaseChange {
+                new CheckPhaseChange {
                     ChangeEvent = FsmEvent.GetFsmEvent("PHASE ROOF")
                 }
             ];
@@ -338,6 +339,99 @@ namespace GhostPlando {
                     everyFrame = false
                 }
             ];
+        }
+
+        public static FsmStateAction[] GlobsActions(PlayMakerFSM self) {
+            return [
+                new IntCompare {
+                    integer1 = self.FsmVariables.GetFsmInt("HP"),
+                    integer2 = self.FsmVariables.GetFsmInt("Phase 5-6 HP"),
+                    lessThan = FsmEvent.GetFsmEvent("SIX"),
+                    equal = FsmEvent.GetFsmEvent("SIX"),
+                    everyFrame = false
+                },
+                .. BossAttacks.Sheo.RunPurplePaint(self),
+                .. BossAttacks.HiveKnight.RunSwarm(self)
+            ];
+        }
+
+        public static FsmStateAction[] SummonBalloonActions(PlayMakerFSM self, GameObject balloon) {
+            return [
+                new SpawnObjectFromGlobalPool {
+                    gameObject = balloon,
+                    spawnPoint = self.FsmVariables.GetFsmGameObject("Zero Origin"),
+                    position = self.FsmVariables.GetFsmVector3("Spawn Vector"),
+                    rotation = Vector3.zero,
+                    storeObject = self.FsmVariables.GetFsmGameObject("Spawned Enemy")
+                },
+                new EnemyPusherIgnore {
+                    target = new FsmOwnerDefault { OwnerOption = OwnerDefaultOption.UseOwner },
+                    other = self.FsmVariables.GetFsmGameObject("Spawned Enemy")
+                }
+            ];
+        }
+
+        public static FsmStateAction[] SummonChoice(PlayMakerFSM self) {
+            return [
+                new IntCompare {
+                    integer1 = self.FsmVariables.GetFsmInt("HP"),
+                    integer2 = self.FsmVariables.GetFsmInt("Phase 5-6 HP"),
+                    greaterThan = FsmEvent.GetFsmEvent("Balloon"),
+                    everyFrame = false
+                },
+                new SendRandomEvent {
+                    events = new List<string> { "Balloon", "Vengefly", "Fluke", "Folly", "Zote" }.Select(s => FsmEvent.GetFsmEvent(s)).ToArray(),
+                    weights = [0.4f, 1f, 1f, 1f, 1f],
+                    delay = 0
+                }
+            ];
+        }
+
+        public static FsmStateAction[] BossDeathActions(PlayMakerFSM self) {
+            return [
+                new SendEventByName {
+                    eventTarget = new FsmEventTarget { target = FsmEventTarget.EventTarget.BroadcastAll },
+                    sendEvent = "GHOST DEATH",
+                    delay = 0,
+                    everyFrame = false
+                },
+                new SetFsmBool {
+                    gameObject = HeroController.instance.gameObject.GameObjectToOwner(),
+                    fsmName = "Spell Control",
+                    variableName = "Dream Focus",
+                    setValue = true,
+                    everyFrame = false
+                },
+                new Lambda(() => {
+                    ParagonDeathEffects.particleSystem = self.GetState("Steam").GetFirstActionOfType<SetParticleEmissionRate>().gameObject.GameObject.Value.GetComponent<ParticleSystem>();
+                    GameManager.instance.StartCoroutine(ParagonDeathEffects.instance.BeginEffects());
+                })
+            ];
+        }
+    }
+
+    public class CheckPhaseChange: FsmStateAction {
+        private static List<int> hpPhases;
+        public FsmEvent ChangeEvent;
+
+        public static void SetupThresholds(int[] hpHits, int multiplier) {
+            int hp = 0;
+            hpPhases = [0];
+            for(int i = hpHits.Length - 1; i >= 0; i--) {
+                hp += multiplier * hpHits[i];
+                hpPhases.Insert(0, hp);
+            }
+        }
+
+        public override void OnEnter() {
+            FsmVariables fv = Fsm.FsmComponent.FsmVariables;
+            int hp = fv.GetFsmInt("HP").Value;
+            FsmInt phase = fv.GetFsmInt("Current Boss Phase");
+            if(hp <= hpPhases[phase.Value]) {
+                phase.Value++;
+                base.Fsm.Event(ChangeEvent);
+            }
+            Finish();
         }
     }
 }

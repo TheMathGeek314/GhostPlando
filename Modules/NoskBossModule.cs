@@ -27,6 +27,7 @@ namespace GhostPlando.Modules {
             On.GameManager.OnNextLevelReady += EditArena;
             On.PlayMakerFSM.OnEnable += RemoveBossTitle;
             On.PlayMakerFSM.OnEnable += EditWingedNosk;
+            On.PlayMakerFSM.OnEnable += EditWoskCorpse;
         }
 
         public override void Unload() {
@@ -36,6 +37,17 @@ namespace GhostPlando.Modules {
             On.GameManager.OnNextLevelReady -= EditArena;
             On.PlayMakerFSM.OnEnable -= RemoveBossTitle;
             On.PlayMakerFSM.OnEnable -= EditWingedNosk;
+            On.PlayMakerFSM.OnEnable -= EditWoskCorpse;
+            DisableInternalHooks();
+        }
+
+        private void DisableInternalHooks() {
+            BossAttacks.BrokenVessel.JarHook?.Dispose();
+            On.PlayMakerFSM.OnEnable -= BossAttacks.SoulMaster.ReduceSpinnerRange;
+            On.PlayMakerFSM.OnEnable -= BossAttacks.HiveKnight.EditBeeDroppers;
+            On.PlayMakerFSM.OnEnable -= BossAttacks.Flukemarm.EditFlukeSpawner;
+            On.PlayMakerFSM.OnEnable -= BossAttacks.GPZote.EditZotelings;
+            On.PlayMakerFSM.OnEnable -= BossAttacks.Galien.EditHammer;
         }
 
         private string LanguageGet(On.Language.Language.orig_Get_string_string orig, string key, string sheetTitle) {
@@ -45,6 +57,8 @@ namespace GhostPlando.Modules {
                         return "Nosk";
                     if(key == "NIGHTMARE_GRIMM_SUPER")
                         return "Mimic Paragon";
+                    if(key == "NIGHTMARE_GRIMM_SUB")
+                        return "";
                 }
             }
             return orig(key, sheetTitle);
@@ -53,10 +67,9 @@ namespace GhostPlando.Modules {
         private void ResetEncounter(On.GameManager.orig_OnNextLevelReady orig, GameManager self) {
             orig(self);
             PlayerData.instance.SetBool(nameof(PlayerData.encounteredMimicSpider), false);
+            HeroController.instance.gameObject.LocateMyFSM("Spell Control").FsmVariables.GetFsmBool("Dream Focus").Value = false;
             if(self.sceneName != "Deepnest_32") {
-                BossAttacks.BrokenVessel.JarHook?.Dispose();
-                On.PlayMakerFSM.OnEnable -= BossAttacks.SoulMaster.ReduceSpinnerRange;
-                On.PlayMakerFSM.OnEnable -= BossAttacks.HiveKnight.EditBeeDroppers;
+                DisableInternalHooks();
             }
         }
 
@@ -115,7 +128,7 @@ namespace GhostPlando.Modules {
             BossAttacks.WDefender.Hook(self);
             BossAttacks.MantisLords.Hook(self);
             BossAttacks.ElderHu.Hook(self);
-            BossAttacks.Grimm.Hook(self);
+            BossAttacks.Grimm.HookNosk(self);
             BossAttacks.PureVessel.Hook(self);
             BossAttacks.CGuardian.Hook(self);
             BossAttacks.HollowKnight.Hook(self);
@@ -139,7 +152,7 @@ namespace GhostPlando.Modules {
             roarEnd.AddFirstAction(new Lambda(() => FirstEncounter = false));
 
             //nonspecific supplemental edits
-            GameObject zeroOrigin = new();
+            GameObject zeroOrigin = new("Zero Origin");
             zeroOrigin.transform.position = Vector3.zero;
             self.AddFsmGameObject("Zero Origin", zeroOrigin);
             self.AddFsmGameObject("Empty Store", null);
@@ -225,10 +238,13 @@ namespace GhostPlando.Modules {
             fallen2Hornet.Actions = BossAttacks.HornetP.RunNeedle(self);
             fallen2Master.Actions = BossAttacks.SoulMaster.RunQuake(self);
             fallen3.Actions = BossAttacks.WDefender.RunShockwave(self);
-            fallen4.Actions = BossAttacks.TraitorLord.RunShockwave(self);
-            fallen4.AddLastActions(BossAttacks.WDefender.RunFountain(self));
+            fallen4.Actions = [.. BossAttacks.TraitorLord.RunShockwave(self), .. BossAttacks.WDefender.RunFountain(self)];
             land2State.AddFirstActions(FsmEdits.RevertCeilingFall(self));
             land3State.Actions = FsmEdits.AfterFallActions(self);
+            //testing vvv
+            Modding.Logger.Log("NoskBossModule.cs Line 245 testing stuff");
+            self.GetState("Roof Jump?").InsertAction(new Lambda(() => Modding.Logger.Log("Reached Roof Jump? before SendRandomEventV3")), 2);
+            //testing ^^^
             self.GetState("Roof Jump?").AddFirstActions(FsmEdits.ResetFallWait(self));
 
             //charging effects
@@ -274,7 +290,7 @@ namespace GhostPlando.Modules {
             gorbState.Actions = BossAttacks.Gorb.RunSpears(self);
             mantisState.Actions = BossAttacks.MantisLords.Run(self);
             firebat1.Actions = BossAttacks.Grimm.RunFirebats(self, 1, -2, false);
-            firebat1.ChainFsmStates([
+            firebat1.ChainFsmStates("FINISHED",
                 ("Firebat 2", BossAttacks.Grimm.RunFirebats(self, 1.1f, 1, false)),
                 ("Firebat 3", BossAttacks.Grimm.RunFirebats(self, 1.2f, -2, true).Concat(BossAttacks.PureVessel.RunTendrilAntic(self)).ToArray()),
                 ("PV Tendril Burst", BossAttacks.PureVessel.RunTendrilBurst(self)),
@@ -284,7 +300,7 @@ namespace GhostPlando.Modules {
                 ("PV Tendril T3", BossAttacks.PureVessel.RunTendrilT3(self)),
                 ("PV Tendril Hit End", BossAttacks.PureVessel.RunTendrilHitEnd(self)),
                 ("PV Tendril Recover", BossAttacks.PureVessel.RunTendrilRecover(self))
-            ]).AddTransition("FINISHED", "Spit Recover");
+            ).AddTransition("FINISHED", "Spit Recover");
 
             //transition to winged form
             FsmState mutateAntic = self.AddState("Mutate Antic");
@@ -377,6 +393,13 @@ namespace GhostPlando.Modules {
             BossAttacks.Uumuu.HookWosk(self);
             BossAttacks.NightmareKing.Hook(self);
             BossAttacks.TraitorLord.HookWosk(self);
+            BossAttacks.Grimm.HookWosk(self);
+            BossAttacks.NoEyes.Hook(self);
+            BossAttacks.VengeflyKing.Hook(self);
+            BossAttacks.Flukemarm.Hook(self);
+            BossAttacks.SoulWarrior.Hook(self);
+            BossAttacks.GPZote.Hook(self);
+            BossAttacks.Galien.Hook(self);
 
             self.AddFsmGameObject("Empty Store", null);
             self.AddFsmInt("Phase 5-6 HP", phaseHpHits[5] * strengthMultiplier);
@@ -410,11 +433,14 @@ namespace GhostPlando.Modules {
             chooseAttackState.GetFirstActionOfType<IntCompare>().integer2 = fv.GetFsmInt("Phase 5-6 HP");
             SendRandomEventV3 randomEvent = chooseAttackState.GetFirstActionOfType<SendRandomEventV3>();
             randomEvent.events = new List<string> { "SWOOP", "ACID ROAR", "SUMMON", "ROOF" }.Select(s => FsmEvent.GetFsmEvent(s)).ToArray();
-            randomEvent.weights = [1, 1, 1, 1];
+            randomEvent.weights = [1, 1, 1, 0.7f];
             randomEvent.trackingInts = new List<string> { "Ct Swoop", "Ct Acid", "Ct Summon", "Ct Roof" }.Select(s => fv.GetFsmInt(s)).ToArray();
             randomEvent.eventMax = [2, 1, 1, 1];
             randomEvent.trackingIntsMissed = new List<string> { "Ms Swoop", "Ms Acid", "Ms Summon", "Ms Roof" }.Select(s => fv.GetFsmInt(s)).ToArray();
-            randomEvent.missedMax = [3, 4, 4, 4];
+            randomEvent.missedMax = [3, 4, 4, 5];
+            SendRandomEventV3 chooseAttack2 = self.GetState("Choose Attack 2").GetFirstActionOfType<SendRandomEventV3>();
+            chooseAttack2.weights[3].Value = 0.7f;
+            chooseAttack2.missedMax[3].Value = 5;
             self.GetState("Summon Recover").GetFirstActionOfType<AudioPlayerOneShotSingle>().Enabled = false;
 
             //Phase 5-6 updates
@@ -422,6 +448,7 @@ namespace GhostPlando.Modules {
             chooseAttackState.RemoveTransitionsOn("HALF");
             chooseAttackState.AddTransition("HALF", toChoose2State);
             toChoose2State.AddTransition("FINISHED", "Choose Attack 2");
+            self.AddFsmInt("Summon Quantity", 2);
             toChoose2State.Actions = FsmEdits.UpdateSpinners(self);
             self.GetState("Choose Attack 2").AddFirstAction(new CheckPhaseChange { ChangeEvent = FsmEvent.GetFsmEvent("ROOF") });
 
@@ -484,6 +511,7 @@ namespace GhostPlando.Modules {
             FsmState sickleOrbStartState = self.AddState("Sickle Orb Start");
             FsmState sickleOrbFireState = self.AddState("Sickle Orb Fire");
             FsmState sickleOrbLoopState = self.AddState("Sickle Orb Loop");
+            FsmState sickleOrbDeclineState = self.AddState("Sickle Orb Decline");
             acidRoarAnticState.RemoveTransitionsTo("Spit 1");
             acidRoarAnticState.AddTransition("FINISHED", spitChooseState);
             spitChooseState.AddTransition("FIVE", spitZapState);
@@ -491,7 +519,8 @@ namespace GhostPlando.Modules {
             spitZapState.AddTransition("FINISHED", "Spit 1");
             sickleOrbStartState.AddTransition("FINISHED", sickleOrbFireState);
             sickleOrbFireState.AddTransition("LOOP", sickleOrbLoopState);
-            sickleOrbFireState.AddTransition("FINISHED", "Acid Roar End");
+            sickleOrbFireState.AddTransition("FINISHED", sickleOrbDeclineState);
+            sickleOrbDeclineState.AddTransition("FINISHED", "Acid Roar End");
             sickleOrbLoopState.AddTransition("FINISHED", sickleOrbFireState);
 
             spitChooseState.Actions = [FsmEdits.PhaseDecisionActions2(self)];
@@ -499,56 +528,93 @@ namespace GhostPlando.Modules {
             sickleOrbStartState.Actions = [.. BossAttacks.TraitorLord.RunSickles(self), .. BossAttacks.SoulMaster.PrepOrb(self)];
             sickleOrbFireState.Actions = BossAttacks.SoulMaster.FireOrb(self);
             sickleOrbLoopState.Actions = BossAttacks.SoulMaster.LoopOrb(self);
+            sickleOrbDeclineState.Actions = [new Wait { time = 0.7f, finishEvent = FsmEvent.Finished, realTime = false }];
 
+            //roof attacks
+            FsmState globState = self.GetState("Globs");
+            FsmState globs2State = self.AddState("Globs 2");
+            FsmState ghostfireState = self.AddState("Ghosts and Fire");
+            FsmState ghostfire2State = self.AddState("Ghosts and Fire 2");
+            globState.RemoveTransitionsOn("FINISHED");
+            globState.AddTransition("FINISHED", globs2State);
+            globState.AddTransition("SIX", ghostfireState);
+            globs2State.AddTransition("FINISHED", "Roof Return");
+            ghostfireState.AddTransition("FINISHED", ghostfire2State);
+            ghostfire2State.AddTransition("FINISHED", "Roof Return");
+            globState.Actions = FsmEdits.GlobsActions(self);
+            globs2State.Actions = BossAttacks.Sheo.RunPurplePaint2(self);
+            ghostfireState.Actions = [.. BossAttacks.NoEyes.RunGhosts(self, true), .. BossAttacks.Grimm.RunFireballsMulti(self, true)];
+            ghostfire2State.Actions = [.. BossAttacks.NoEyes.RunGhosts(self, false), .. BossAttacks.Grimm.RunFireballsMulti(self, false)];
 
-
-
-            //testing enraged guardian laser
-            self.GetState("Init").AddLastActions(BossAttacks.EGuardian.InitDirectLaser(self));
+            //summon attacks
             FsmState summonRoarState = self.GetState("Summon Roar");
+            summonRoarState.GetFirstActionOfType<SetIntValue>().intValue = fv.GetFsmInt("Summon Quantity");
+            FsmState summonState = self.GetState("Summon");
+            GameObject infectedBalloon = summonState.GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
+            infectedBalloon.Spawn().Recycle();
+            summonState.GetFirstActionOfType<SpawnObjectFromGlobalPool>().Enabled = false;
+            summonState.GetFirstActionOfType<EnemyPusherIgnore>().Enabled = false;
+            FsmState summonBalloon = self.AddState("Summon Infected Balloon");
+            FsmState summonVengefly = self.AddState("Summon Vengefly");
+            FsmState summonFlukefey = self.AddState("Summon Flukefey");
+            FsmState summonFolly = self.AddState("Summon Folly");
+            FsmState summonZoteling = self.AddState("Summon Zoteling");
+            summonState.RemoveTransitionsTo("Resummon");
+            foreach((string transition, FsmState sstate) in new (string, FsmState)[] { ("Balloon", summonBalloon),
+                    ("Vengefly", summonVengefly), ("Fluke", summonFlukefey), ("Folly", summonFolly), ("Zote", summonZoteling)}) {
+                summonState.AddTransition(transition, sstate);
+                sstate.AddTransition("FINISHED", "Resummon");
+            }
+            summonBalloon.Actions = FsmEdits.SummonBalloonActions(self, infectedBalloon);
+            summonVengefly.Actions = BossAttacks.VengeflyKing.SummonVengefly(self);
+            summonFlukefey.Actions = BossAttacks.Flukemarm.SummonFlukefey(self);
+            summonFolly.Actions = BossAttacks.SoulWarrior.SummonFolly(self);
+            summonZoteling.Actions = BossAttacks.GPZote.SummonZoteling(self);
+            summonState.AddLastActions(FsmEdits.SummonChoice(self));
+
+            self.GetState("Init").AddLastActions(BossAttacks.EGuardian.InitDirectLaser(self));
             summonRoarState.RemoveTransitionsTo("Summon");
-            summonRoarState.ChainFsmStates(
-                ("CG Laser Prep", BossAttacks.EGuardian.PrepDirectLaser(self)),
+            FsmState summonChooseState = self.AddState("Summon Choose");
+            summonRoarState.AddTransition("FINISHED", summonChooseState);
+            summonChooseState.Actions = [FsmEdits.PhaseDecisionActions2(self)];
+            summonChooseState.ChainFsmStates("FIVE",
+                ("CG Laser Prep", [.. BossAttacks.EGuardian.PrepDirectLaser(self), .. BossAttacks.Markoth.RunNails(self)]),
                 ("CG Laser Fire", BossAttacks.EGuardian.FireDirectLaser(self)),
                 ("CG Laser End", BossAttacks.EGuardian.EndDirectLaser(self))
             ).AddTransition("FINISHED", "Summon");
-
-            //testing markoth nails (depends on CG Ray Vector)
-            self.GetState("CG Laser Prep").AddLastActions(BossAttacks.Markoth.RunNails(self));
-
-            //testing purple paint and bee rain
-            FsmState globsState = self.GetState("Globs");
-            FsmState globs2State = self.AddState("Globs 2");
-            globsState.RemoveTransitionsOn("FINISHED");
-            globsState.AddTransition("FINISHED", globs2State);//option to split on phase 6?
-            globs2State.AddTransition("FINISHED", "Roof Return");
-            globsState.Actions = [.. BossAttacks.Sheo.RunPurplePaint(self), .. BossAttacks.HiveKnight.RunSwarm(self)];
-            globs2State.Actions = BossAttacks.Sheo.RunPurplePaint2(self);
-        }
-    }
-
-    public class CheckPhaseChange: FsmStateAction {
-        private static List<int> hpPhases;
-        public FsmEvent ChangeEvent;
-
-        public static void SetupThresholds(int[] hpHits, int multiplier) {
-            int hp = 0;
-            hpPhases = [0];
-            for(int i = hpHits.Length - 1; i >= 0; i--) {
-                hp += multiplier * hpHits[i];
-                hpPhases.Insert(0, hp);
-            }
+            summonChooseState.ChainFsmStates("SIX",
+                ("Galien Hammer", BossAttacks.Galien.RaiseHammer(self))
+            ).AddTransition("FINISHED", "Summon");
+            FsmState recoverState = self.GetState("Summon Recover");
+            recoverState.RemoveTransitionsOn("FINISHED");
+            FsmState recoverChooseState = self.AddState("Summon Recover Choose");
+            recoverState.AddTransition("FINISHED", recoverChooseState);
+            recoverChooseState.Actions = [FsmEdits.PhaseDecisionActions2(self)];
+            recoverChooseState.AddTransition("FIVE", "Idle");
+            recoverChooseState.ChainFsmStates("SIX",
+                ("Recover Pre Hammer", [new Wait { time = 1.5f, finishEvent = FsmEvent.Finished, realTime = false }]),
+                ("Recover Hammer", BossAttacks.Galien.ThrowHammer(self))
+            ).AddTransition("FINISHED", "Idle");
         }
 
-        public override void OnEnter() {
-            FsmVariables fv = Fsm.FsmComponent.FsmVariables;
-            int hp = fv.GetFsmInt("HP").Value;
-            FsmInt phase = fv.GetFsmInt("Current Boss Phase");
-            if(hp <= hpPhases[phase.Value]) {
-                phase.Value++;
-                base.Fsm.Event(ChangeEvent);
+        private void EditWoskCorpse(On.PlayMakerFSM.orig_OnEnable orig, PlayMakerFSM self) {
+            orig(self);
+            if(GameManager.instance.sceneName == "Deepnest_32" && self.gameObject.name.StartsWith("Corpse Hornet Nosk")) {
+                if(self.FsmName == "Corpse Control") {
+                    self.GetState("Init").RemoveTransitionsTo("Blow");
+                }
+                else if(self.FsmName == "corpse") {
+                    if(self.gameObject.TryGetComponent<ParagonDeathEffects>(out _))
+                        return;
+                    self.gameObject.AddComponent<ParagonDeathEffects>();
+                    //ParagonDeathEffects.particleSystem = self.GetState("Steam").GetFirstActionOfType<SetParticleEmissionRate>().gameObject.GameObject.Value.GetComponent<ParticleSystem>();
+                    FsmState steam = self.GetState("Steam");
+                    steam.RemoveTransitionsTo("Ready");
+                    FsmState finalState = self.AddState("Final State");
+                    steam.AddTransition("FINISHED", finalState);
+                    finalState.Actions = FsmEdits.BossDeathActions(self);
+                }
             }
-            Finish();
         }
     }
 }

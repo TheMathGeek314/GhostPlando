@@ -48,6 +48,7 @@ namespace GhostPlando.BossAttacks {
             wosk.AddFsmGameObject("SM Orb Projectile", null);
             wosk.AddFsmFloat("SM Orb Angle", 0);
             wosk.AddFsmFloat("SM Orb Looper", 0);
+            orbObject.Spawn().Recycle();
         }
 
         public static FsmStateAction[] RunQuake(PlayMakerFSM self) {

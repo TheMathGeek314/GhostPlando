@@ -47,22 +47,13 @@ namespace GhostPlando.BossAttacks {
             FsmGameObject globarbInstance = globFsm.AddFsmGameObject("Globarb Instance", null);
 
             decisionState.Actions = [
-                new GetScale {
+                new SendEventByScale {
                     gameObject = wosk.FsmGOToOwner("Self"),
-                    vector = Vector3.zero,
-                    xScale = sx,
-                    yScale = 0,
-                    zScale = 0,
-                    space = Space.World,
-                    everyFrame = false
-                },
-                new FloatCompare {
-                    float1 = sx,
-                    float2 = 0,
-                    tolerance = 0,
-                    lessThan = FsmEvent.GetFsmEvent("GLOB"),
-                    greaterThan = FsmEvent.GetFsmEvent("BARB"),
-                    everyFrame = false
+                    eventTarget = wosk.FsmGOToEvent("Self"),
+                    xScale = true,
+                    positiveEvent = FsmEvent.GetFsmEvent("BARB"),
+                    negativeEvent = FsmEvent.GetFsmEvent("GLOB"),
+                    space = Space.World
                 }
             ];
             globState.Actions = [

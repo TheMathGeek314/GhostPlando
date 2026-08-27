@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
-using ItemChanger.Extensions;
-using ItemChanger.FsmStateActions;
 
 namespace GhostPlando.BossAttacks {
     internal class CGuardian {
