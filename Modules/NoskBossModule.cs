@@ -241,10 +241,6 @@ namespace GhostPlando.Modules {
             fallen4.Actions = [.. BossAttacks.TraitorLord.RunShockwave(self), .. BossAttacks.WDefender.RunFountain(self)];
             land2State.AddFirstActions(FsmEdits.RevertCeilingFall(self));
             land3State.Actions = FsmEdits.AfterFallActions(self);
-            //testing vvv
-            Modding.Logger.Log("NoskBossModule.cs Line 245 testing stuff");
-            self.GetState("Roof Jump?").InsertAction(new Lambda(() => Modding.Logger.Log("Reached Roof Jump? before SendRandomEventV3")), 2);
-            //testing ^^^
             self.GetState("Roof Jump?").AddFirstActions(FsmEdits.ResetFallWait(self));
 
             //charging effects
@@ -607,7 +603,6 @@ namespace GhostPlando.Modules {
                     if(self.gameObject.TryGetComponent<ParagonDeathEffects>(out _))
                         return;
                     self.gameObject.AddComponent<ParagonDeathEffects>();
-                    //ParagonDeathEffects.particleSystem = self.GetState("Steam").GetFirstActionOfType<SetParticleEmissionRate>().gameObject.GameObject.Value.GetComponent<ParticleSystem>();
                     FsmState steam = self.GetState("Steam");
                     steam.RemoveTransitionsTo("Ready");
                     FsmState finalState = self.AddState("Final State");
