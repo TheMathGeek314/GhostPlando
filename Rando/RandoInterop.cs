@@ -21,6 +21,8 @@ namespace GhostPlando {
             Finder.DefineCustomItem(new ImpossibleItem());
 
             RCData.RuntimeLogicOverride.Subscribe(50, ApplyLogic);
+
+            RandoExtraInterop.Hook();
         }
 
         private static void ApplyLogic(GenerationSettings gs, LogicManagerBuilder lmb) {

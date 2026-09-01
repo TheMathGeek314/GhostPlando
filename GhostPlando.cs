@@ -3,10 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace GhostPlando {
-    public class GhostPlando: Mod {
+    public class GhostPlando: Mod, IGlobalSettings<GlobalSettings> {
         new public string GetName() => "GhostPlando";
         public override string GetVersion() => "1.0.0.0";
         internal static GhostPlando Instance { get; private set; }
+
+        public static GlobalSettings globalSettings { get; set; } = new();
+        public void OnLoadGlobal(GlobalSettings s) => globalSettings = s;
+        public GlobalSettings OnSaveGlobal() => globalSettings;
 
         public GhostPlando(): base("GhostPlando") {
             Instance = this;

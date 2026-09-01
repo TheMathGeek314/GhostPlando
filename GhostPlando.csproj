@@ -76,6 +76,9 @@
     <Reference Include="Assembly-CSharp-firstpass">
       <HintPath>$(HollowKnightRefs)/Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
+    <Reference Include="DebugMod">
+      <HintPath>..\_dependencies\DebugMod.dll</HintPath>
+    </Reference>
     <Reference Include="GalaxyCSharp">
       <HintPath>$(HollowKnightRefs)/GalaxyCSharp.dll</HintPath>
     </Reference>
@@ -84,6 +87,9 @@
     </Reference>
     <Reference Include="LoreCore">
       <HintPath>..\_dependencies\LoreCore.dll</HintPath>
+    </Reference>
+    <Reference Include="MenuChanger">
+      <HintPath>..\_dependencies\MenuChanger.dll</HintPath>
     </Reference>
     <Reference Include="MMHOOK_Assembly-CSharp">
       <HintPath>$(HollowKnightRefs)/MMHOOK_Assembly-CSharp.dll</HintPath>

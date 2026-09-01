@@ -11,6 +11,8 @@ using ItemChanger.Modules;
 namespace GhostPlando.Modules {
     internal class NoskBossModule: Module {
         public bool EncounteredWingedNosk;
+        public bool ShowcaseMode;
+        public bool NonPlandoMode;
         private bool FirstEncounter = true;
         private int strengthMultiplier => PlayerData.instance.GetBool(nameof(PlayerData.equippedCharm_25)) ? 6 : 5;
 
@@ -18,9 +20,10 @@ namespace GhostPlando.Modules {
         internal static GameObject titleFaderPrefab;
         internal static GameObject audioPlayer;
         internal static GameObject wingedNoskPrefab;
-        private int[] phaseHpHits = [25, 50, 45, 45, 35, 35];
+        private int[] phaseHpHits;
 
         public override void Initialize() {
+            phaseHpHits = ShowcaseMode ? [25, 35, 20, 20, 20, 20] : [25, 50, 45, 45, 35, 35];
             On.Language.Language.Get_string_string += LanguageGet;
             On.GameManager.OnNextLevelReady += ResetEncounter;
             On.PlayMakerFSM.OnEnable += EditNosk;
@@ -135,18 +138,20 @@ namespace GhostPlando.Modules {
             BossAttacks.TraitorLord.HookNosk(self);
 
             //force first attack after phase threshold
-            self.GetState("Idle").AddTransition("PHASE ROOF", "RS Jump Antic");
+            FsmState idleState = self.GetState("Idle");
+            idleState.AddTransition("PHASE ROOF", "RS Jump Antic");
 
             //mostly irrelevant tweaks to vanilla behaviour
             self.GetState("Spit Antic").GetFirstActionOfType<SetPosition>().y.Value = 4.84f;
-            self.GetState("Roof Jump?").GetFirstActionOfType<IntCompare>().integer2 = self.FsmVariables.GetFsmInt("Phase 1-2 HP");
+            FsmState roofJumpQState = self.GetState("Roof Jump?");
+            roofJumpQState.GetFirstActionOfType<IntCompare>().integer2 = self.FsmVariables.GetFsmInt("Phase 1-2 HP");
             self.GetState("Rising").GetFirstActionOfType<GetVelocity2d>().Enabled = true;
-            self.GetState("Idle").AddFirstActions(FsmEdits.IdleActions(self));
+            idleState.AddFirstActions(FsmEdits.IdleActions(self));
 
             //speed up returning intro
             if(!FirstEncounter) {
                 for(int i = 1; i < 5; i++) {
-                    self.GetState($"Trans {i}").GetFirstActionOfType<Wait>().time = 1f;
+                    self.GetState($"Trans {i}").GetFirstActionOfType<Wait>().time = 0.7f;
                 }
             }
             roarEnd.AddFirstAction(new Lambda(() => FirstEncounter = false));
@@ -241,7 +246,8 @@ namespace GhostPlando.Modules {
             fallen4.Actions = [.. BossAttacks.TraitorLord.RunShockwave(self), .. BossAttacks.WDefender.RunFountain(self)];
             land2State.AddFirstActions(FsmEdits.RevertCeilingFall(self));
             land3State.Actions = FsmEdits.AfterFallActions(self);
-            self.GetState("Roof Jump?").AddFirstActions(FsmEdits.ResetFallWait(self));
+            roofJumpQState.AddFirstActions(FsmEdits.ResetFallWait(self));
+            roofJumpQState.GetFirstActionOfType<SendRandomEventV3>().weights = [0.14f, 0.86f];
 
             //charging effects
             self.GetState("Charge Start").AddFirstActions(BossAttacks.Uumuu.RunSlowZap(self));
@@ -303,7 +309,7 @@ namespace GhostPlando.Modules {
             FsmState mutateJump = self.AddState("Mutate Jump");
             FsmState mutateWait = self.AddState("Mutate Wait");
             FsmState mutateSwitch = self.AddState("Mutate Switch");
-            self.GetState("Idle").AddTransition("WINGIFY", mutateAntic);
+            idleState.AddTransition("WINGIFY", mutateAntic);
             mutateAntic.AddTransition("FINISHED", mutateJump);
             mutateJump.AddTransition("LAND", mutateWait);
             mutateWait.AddTransition("FINISHED", mutateSwitch);
@@ -429,13 +435,13 @@ namespace GhostPlando.Modules {
             chooseAttackState.GetFirstActionOfType<IntCompare>().integer2 = fv.GetFsmInt("Phase 5-6 HP");
             SendRandomEventV3 randomEvent = chooseAttackState.GetFirstActionOfType<SendRandomEventV3>();
             randomEvent.events = new List<string> { "SWOOP", "ACID ROAR", "SUMMON", "ROOF" }.Select(s => FsmEvent.GetFsmEvent(s)).ToArray();
-            randomEvent.weights = [1, 1, 1, 0.7f];
+            randomEvent.weights = [1, 1, 1, 0.6f];
             randomEvent.trackingInts = new List<string> { "Ct Swoop", "Ct Acid", "Ct Summon", "Ct Roof" }.Select(s => fv.GetFsmInt(s)).ToArray();
             randomEvent.eventMax = [2, 1, 1, 1];
             randomEvent.trackingIntsMissed = new List<string> { "Ms Swoop", "Ms Acid", "Ms Summon", "Ms Roof" }.Select(s => fv.GetFsmInt(s)).ToArray();
             randomEvent.missedMax = [3, 4, 4, 5];
             SendRandomEventV3 chooseAttack2 = self.GetState("Choose Attack 2").GetFirstActionOfType<SendRandomEventV3>();
-            chooseAttack2.weights[3].Value = 0.7f;
+            chooseAttack2.weights[3].Value = 0.6f;
             chooseAttack2.missedMax[3].Value = 5;
             self.GetState("Summon Recover").GetFirstActionOfType<AudioPlayerOneShotSingle>().Enabled = false;
 
@@ -596,18 +602,38 @@ namespace GhostPlando.Modules {
         private void EditWoskCorpse(On.PlayMakerFSM.orig_OnEnable orig, PlayMakerFSM self) {
             orig(self);
             if(GameManager.instance.sceneName == "Deepnest_32" && self.gameObject.name.StartsWith("Corpse Hornet Nosk")) {
-                if(self.FsmName == "Corpse Control") {
-                    self.GetState("Init").RemoveTransitionsTo("Blow");
+                if(!NonPlandoMode) {
+                    if(self.FsmName == "Corpse Control") {
+                        self.GetState("Init").RemoveTransitionsTo("Blow");
+                    }
+                    else if(self.FsmName == "corpse") {
+                        if(self.gameObject.TryGetComponent<ParagonDeathEffects>(out _))
+                            return;
+                        self.gameObject.AddComponent<ParagonDeathEffects>();
+                        FsmState steam = self.GetState("Steam");
+                        steam.RemoveTransitionsTo("Ready");
+                        FsmState finalState = self.AddState("Final State");
+                        steam.AddTransition("FINISHED", finalState);
+                        finalState.Actions = FsmEdits.BossDeathActions(self);
+                    }
                 }
-                else if(self.FsmName == "corpse") {
-                    if(self.gameObject.TryGetComponent<ParagonDeathEffects>(out _))
-                        return;
-                    self.gameObject.AddComponent<ParagonDeathEffects>();
-                    FsmState steam = self.GetState("Steam");
-                    steam.RemoveTransitionsTo("Ready");
-                    FsmState finalState = self.AddState("Final State");
-                    steam.AddTransition("FINISHED", finalState);
-                    finalState.Actions = FsmEdits.BossDeathActions(self);
+                else {
+                    if(self.FsmName == "Corpse Control") {
+                        self.GetState("Blow").AddFirstActions([
+                            new SendEventByName {
+                                eventTarget = new FsmEventTarget { target = FsmEventTarget.EventTarget.BroadcastAll },
+                                sendEvent = "BG OPEN",
+                                delay = 0,
+                                everyFrame = false
+                            },
+                            new SendEventByName {
+                                eventTarget = new FsmEventTarget { target = FsmEventTarget.EventTarget.BroadcastAll },
+                                sendEvent = "GHOST DEATH",
+                                delay = 0,
+                                everyFrame = false
+                            }
+                        ]);
+                    }
                 }
             }
         }
