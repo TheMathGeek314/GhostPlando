@@ -23,7 +23,7 @@ namespace GhostPlando.Modules {
         private int[] phaseHpHits;
 
         public override void Initialize() {
-            phaseHpHits = ShowcaseMode ? [25, 37, 30, 30, 22, 22] : [25, 50, 45, 45, 35, 35];
+            phaseHpHits = ShowcaseMode ? [23, 34, 28, 28, 22, 22] : [25, 50, 45, 45, 35, 35];
             On.Language.Language.Get_string_string += LanguageGet;
             On.GameManager.OnNextLevelReady += ResetEncounter;
             On.PlayMakerFSM.OnEnable += EditNosk;

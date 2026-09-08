@@ -114,6 +114,11 @@ namespace GhostPlando.BossAttacks {
                     waveFV.GetFsmBool("Facing Right").Value = false;
                     waveFV.GetFsmFloat("Speed").Value = 25;
                 }),
+                new SetFloatValue {
+                    floatVariable = self.FsmVariables.GetFsmFloat("Wait After Falling"),
+                    floatValue = 0.3f,
+                    everyFrame = false
+                }
             ];
         }
 

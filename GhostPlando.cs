@@ -16,7 +16,7 @@ namespace GhostPlando {
             Instance = this;
             RandoInterop.DefineDoors();
         }
-        
+
         public override List<(string, string)> GetPreloadNames() {
             return [
                 ("Abyss_19", "Infected Knight"),

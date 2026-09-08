@@ -165,7 +165,12 @@ namespace GhostPlando.BossAttacks {
                 },
                 new Lambda(() => {
                     self.gameObject.LocateMyFSM("White Defender Pillars").SendEvent("TRIGGER");
-                })
+                }),
+                new SetFloatValue {
+                    floatVariable = self.FsmVariables.GetFsmFloat("Wait After Falling"),
+                    floatValue = 0.5f,
+                    everyFrame = false
+                }
             ];
         }
 
