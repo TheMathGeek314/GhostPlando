@@ -16,7 +16,6 @@ namespace GhostPlando.Modules {
     internal class VanishedBossesModule: ItemChanger.Modules.Module {
         private string[] intBosses = [
             nameof(pd.noEyesDefeated),
-            nameof(pd.mumCaterpillarDefeated),
             nameof(pd.galienDefeated),
             nameof(pd.markothDefeated),
             nameof(pd.xeroDefeated),
@@ -36,16 +35,12 @@ namespace GhostPlando.Modules {
             nameof(pd.megaMossChargerDefeated),
             nameof(pd.flukeMotherDefeated),
             nameof(pd.defeatedMantisLords),
-            nameof(pd.killedHiveKnight),
             nameof(pd.killedInfectedKnight),
             nameof(pd.infectedKnightDreamDefeated),
             nameof(pd.collectorDefeated),
             nameof(pd.killedMegaBeamMiner),
             nameof(pd.defeatedMegaBeamMiner),
             nameof(pd.defeatedMegaJelly),
-            nameof(pd.killedTraitorLord),
-            nameof(pd.mageLordDefeated),
-            nameof(pd.mageLordDreamDefeated),
             nameof(pd.defeatedDungDefender),
             nameof(pd.killedGrimm)
         ];
