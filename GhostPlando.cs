@@ -5,7 +5,7 @@ using UnityEngine;
 namespace GhostPlando {
     public class GhostPlando: Mod, IGlobalSettings<GlobalSettings> {
         new public string GetName() => "GhostPlando";
-        public override string GetVersion() => "1.0.0.0";
+        public override string GetVersion() => "1.0.0.1";
         internal static GhostPlando Instance { get; private set; }
 
         public static GlobalSettings globalSettings { get; set; } = new();

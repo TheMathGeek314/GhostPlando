@@ -10,6 +10,7 @@ using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.Internal;
 using ItemChanger.Util;
+using AccessRandomizer.IC;
 using LoreCore.Items;
 
 namespace GhostPlando.Modules {
@@ -66,6 +67,8 @@ namespace GhostPlando.Modules {
 
         private ILHook listenHook;
         private MethodInfo _listenItem = typeof(PowerLoreItem).Assembly.GetType("LoreCore.Items.ListenItem").GetNestedType("<>c__DisplayClass9_0", BindingFlags.NonPublic).GetMethod("<PlayMakerFSM_OnEnable>b__0", BindingFlags.Instance | BindingFlags.NonPublic);
+        private ILHook respectHook;
+        private MethodInfo _weRespect = typeof(RespectLocation).GetMethod("WeRespect", BindingFlags.NonPublic | BindingFlags.Instance);
         
         public override void Initialize() {
             SetBossVars();
@@ -133,10 +136,12 @@ namespace GhostPlando.Modules {
             yield return null;
             
             listenHook = new ILHook(_listenItem, OnListenEnable);
+            respectHook = new ILHook(_weRespect, OnWeRespect);
         }
 
         private void DisposeModHooks() {
             listenHook.Dispose();
+            respectHook.Dispose();
         }
 
         private void OnListenEnable(ILContext il) {
@@ -144,6 +149,14 @@ namespace GhostPlando.Modules {
             cursor.GotoNext(i => i.MatchLdstr("You can't understand them."));
             cursor.Index++;
             cursor.EmitDelegate<Func<string, string>>(old => "They can't understand you.");
+        }
+
+        private void OnWeRespect(ILContext il) {
+            ILCursor cursor = new ILCursor(il).Goto(0);
+            cursor.GotoNext(i => i.MatchLdarg(2),
+                            i => i.MatchLdarg(2),
+                            i => i.MatchLdfld<SceneAdditiveLoadConditional>("sceneNameToLoad"));
+            cursor.RemoveRange(4);
         }
     }
 }
